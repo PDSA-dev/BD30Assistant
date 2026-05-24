@@ -3267,18 +3267,12 @@ function getRTCode_retard(segments){
   if(hasGroupe)return"7321";           // Tarif Groupe
   if(S.exceptionalIndemnity)return"7211"; // Compensation exceptionnelle multi-seg
   if(isBilletDirectOUIGOTGV(segments)){
-    // RT OUIGO+TGV : 3 cas distincts (référentiel FILES BD30, cas 7)
-    var odly=S.ouigoDelay||0;
-    var fdly=S.delay;
-    if(odly>=60&&fdly<60)return"6373";  // OUIGO>60min retard, retard final récupéré (<60min) → complément CARE
-    if(fdly>=60)return"6489";           // 1er train OUIGO (avec ou sans retard), retard final à l'arrivée
-    return"5828";                        // Cas général BD30 (retard final 30-59min, OUIGO non spécifique)
+    // Billet Direct OUIGO+TGV — RT selon retard final et retard OUIGO (ref. normes AV p.40)
+    if(S.delay>=60)return"6489";                              // Retard final ≥ 60 min
+    if(S.ouigoDelay>=60&&S.delay<60)return"6373";            // OUIGO proactif ≥ 60, final < 60
+    return"5828";                                             // Cas général 30–59 min
   }
-  if(hasTER){
-    // RT TER+TGV : distinction avec/sans frais annexes (FILES BD30 p.27)
-    var hasFraisAnnexes=S.fraisList&&S.fraisList.length>0;
-    return hasFraisAnnexes?"6055":"6056"; // 6055=avec frais annexes / 6056=sans frais
-  }
+  if(hasTER)return"6970 / 6389";       // TER + TGV/INT
   return"5828";                         // TGV + TGV (standard BD30)
 }
 
