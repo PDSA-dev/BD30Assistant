@@ -3247,14 +3247,7 @@ function getRTCode_retard(segments){
   var eligSegs=segments.filter(function(s){return s.elig;});
   if(!eligSegs.length)return"2388";
 
-  // G30 vs BD30 : basé sur le nombre de transporteurs distincts éligibles,
-  // pas sur le nombre de segments (un G30 multi-passagers génère N segments
-  // pour 1 seul transporteur et doit rester classé G30)
-  var distinctCarriers=eligSegs.reduce(function(acc,s){
-    if(acc.indexOf(s.carrier)===-1)acc.push(s.carrier);
-    return acc;
-  },[]);
-  var segCount=distinctCarriers.length;
+  var segCount=segments.length; // nombre total de segments (détermine G30 vs BD30)
 
   var hasTGVInt=eligSegs.some(function(s){return s.carrier==="tgv_int";});
   var hasTER=eligSegs.some(function(s){return s.carrier==="ter"||s.carrier==="ter_zou"||s.carrier==="ter_krono";});
@@ -3264,7 +3257,7 @@ function getRTCode_retard(segments){
   var hasGroupe=eligSegs.some(function(s){return s.tarif==="groupe";});
 
   if(segCount===1){
-    // ── G30 : 1 transporteur distinct ────────────────────────────────
+    // ── G30 : 1 segment ──────────────────────────────────────────────
     if(hasPrime)return"2397";          // Billet Prime titulaire / tiers FID/GVT
     if(hasTGVInt)return"2367";         // TGV international (filiale SNCF)
     return"2388";                       // Standard (incl. Max Loisirs/forfait)
@@ -3658,7 +3651,7 @@ function sOUIGORetardSegment(){
 
 function sFraisType(){
   return card("Type de frais ?",null,renderOpts(FRAIS_TYPES.map(function(f){
-    return{icon:f.icon,label:f.label,desc:f.note,badge:"Max "+f.max+"€",cb:function(){
+    return{icon:f.icon,label:f.label,desc:f.note,badge:f.max!=null?"Max "+f.max+"€":"Sans plafond",cb:function(){
       pushH(f.icon,"Frais",f.label);
       set({buildingSeg:{fraisType:f.id,fraisMax:f.max},step:"frais_montant"});
     }};
@@ -3671,21 +3664,23 @@ function sFraisMontant(){
 
   // Déterminer le plafond total et le libellé
   var multiplier=1;
-  var maxTotal=frais.max;
+  var maxTotal=frais.max; // null = sans plafond
   var multiplyNote="";
-  if(frais.unit==="voyageur"||frais.unit==="passager"){
+  if(frais.max==null){
+    multiplyNote=" (sans plafond fixe — remboursement du surcoût sur justificatif)";
+  }else if(frais.unit==="voyageur"||frais.unit==="passager"){
     multiplier=Math.max(1,S.nbPass);
     maxTotal=frais.max*Math.max(1,S.nbPass);
     multiplyNote=" (plafond : "+frais.max+"€/voyageur × "+Math.max(1,S.nbPass)+" = "+maxTotal+"€ max au total)";
   }
 
   wrap.appendChild(div("step-sub",frais.label+" - Montant TOTAL (€) :"+multiplyNote));
-  var i=inp("number","0");i.min=0;i.max=maxTotal;i.step="0.01";
+  var i=inp("number","0");i.min=0;if(maxTotal!=null){i.max=maxTotal;}i.step="0.01";
   wrap.appendChild(i);
   var btn=document.createElement("button");btn.className="btn-confirm";btn.textContent="Ajouter →";
   btn.onclick=function(){
     var rawInput=parseFloat(i.value)||0;
-    var finalAmt=Math.min(rawInput,maxTotal);
+    var finalAmt=maxTotal!=null?Math.min(rawInput,maxTotal):rawInput;
     var nbp=Math.max(1,S.nbPass);
     S.fraisList.push({type:frais.id,montant:rawInput,finalAmt:finalAmt,maxPerPerson:frais.max,nbPassUsed:nbp,unit:frais.unit});
     pushH(frais.icon,frais.label,finalAmt.toFixed(2)+"€ (total)");
