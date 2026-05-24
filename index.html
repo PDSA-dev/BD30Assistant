@@ -3266,8 +3266,19 @@ function getRTCode_retard(segments){
   // ── BD30 : 2+ segments ───────────────────────────────────────────
   if(hasGroupe)return"7321";           // Tarif Groupe
   if(S.exceptionalIndemnity)return"7211"; // Compensation exceptionnelle multi-seg
-  if(isBilletDirectOUIGOTGV(segments))return"5828 + 6373"; // Billet Direct OUIGO+TGV
-  if(hasTER)return"6970 / 6389";       // TER + TGV/INT
+  if(isBilletDirectOUIGOTGV(segments)){
+    // RT OUIGO+TGV : 3 cas distincts (référentiel FILES BD30, cas 7)
+    var odly=S.ouigoDelay||0;
+    var fdly=S.delay;
+    if(odly>=60&&fdly<60)return"6373";  // OUIGO>60min retard, retard final récupéré (<60min) → complément CARE
+    if(fdly>=60)return"6489";           // 1er train OUIGO (avec ou sans retard), retard final à l'arrivée
+    return"5828";                        // Cas général BD30 (retard final 30-59min, OUIGO non spécifique)
+  }
+  if(hasTER){
+    // RT TER+TGV : distinction avec/sans frais annexes (FILES BD30 p.27)
+    var hasFraisAnnexes=S.fraisList&&S.fraisList.length>0;
+    return hasFraisAnnexes?"6055":"6056"; // 6055=avec frais annexes / 6056=sans frais
+  }
   return"5828";                         // TGV + TGV (standard BD30)
 }
 
@@ -4563,7 +4574,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.6"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
