@@ -3784,6 +3784,19 @@ function sResultFrais(){
 
   if(S.exceptionalIndemnity){
     indemniteRetard+=S.exceptionalIndemnity.amount;
+    var exSeg=segments.find(function(s){return s.id===S.exceptionalIndemnity.segmentId;});
+    if(exSeg){
+      var exFinalAmt=exSeg.price*(S.exceptionalIndemnity.rate/100);
+      allDetailsRetard.push({
+        carrier:getCarrierLabel(exSeg.carrier)+" (COMPLÉMENT)",
+        tarif:"Indemnisation exceptionnelle",
+        price:exSeg.price,
+        rate:S.exceptionalIndemnity.rate,
+        amt:S.exceptionalIndemnity.amount,
+        mode:"Indemnisation exceptionnelle",
+        displayAmt:"Complément : "+S.exceptionalIndemnity.amount.toFixed(2)+"€ (pour atteindre "+exFinalAmt.toFixed(2)+"€, soit "+S.exceptionalIndemnity.rate+"%)"
+      });
+    }
   }
 
   // Calculer les frais
@@ -4570,7 +4583,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7.1"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7.2"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
