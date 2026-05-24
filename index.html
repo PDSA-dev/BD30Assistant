@@ -1713,15 +1713,16 @@ var TARIFS=[
   {id:"standard",             label:"Loisir / Avantage",         desc:"Billet payant — indemnisation en % du prix", mode:"Virement"},
   {id:"carte_liberte_billet", label:"Carte Liberté",             desc:"Plancher forfaitaire 5 € min / passager à partir de 30 min de retard", mode:"Virement"},
   {id:"max_loisirs",          label:"Abonnés Max & Forfaits",    desc:"Billet à 0 € — montant fixe BAD", mode:"BAD"},
-  {id:"prime_titulaire",      label:"Prime — Titulaire",         desc:"Titulaire carte Prime — points fidélité", mode:"Points"},
-  {id:"prime_tiers_billet",   label:"Prime — Billet pour un tiers", desc:"FID ou Tiers seul — identifier qui dépose la réclamation", mode:"BAD/Points"},
-  {id:"prime_gvt_tiers",      label:"Prime — GVT + Tiers",       desc:"GVT avec Prime + tiers — BAD GVT + BAD tiers", mode:"BAD"},
+  {id:"prime_billet", label:"Billet Prime", desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers", mode:"Prime"},
 ];
 
 // Tarifs résolus via l'étape déposant — non affichés dans la liste UI mais nécessaires au calcul et au lookup
 var TARIFS_PRIME_HIDDEN=[
-  {id:"prime_fid_tiers",  label:"Prime — FID + Tiers",  desc:"FID avec Prime pour un tiers — pts FID + BAD tiers", mode:"Points + BAD"},
-  {id:"prime_tiers_seul", label:"Prime — Tiers seul",   desc:"Billet Prime GV/GVLC acheté pour un tiers — BAD fixe selon délai", mode:"BAD"},
+  {id:"prime_titulaire",       label:"Prime — Titulaire (FID)",    desc:"Titulaire carte Prime — points fidélité", mode:"Points"},
+  {id:"prime_gvt_transitoire", label:"Prime — GVT Transitoire",   desc:"Grand Voyageur Transitoire sortant du programme — BAD seul", mode:"BAD"},
+  {id:"prime_fid_tiers",       label:"Prime — FID + Tiers",       desc:"FID avec Prime pour un tiers — pts FID + BAD tiers", mode:"Points + BAD"},
+  {id:"prime_gvt_tiers",       label:"Prime — GVT + Tiers",       desc:"GVT avec Prime + tiers — BAD GVT + BAD tiers", mode:"BAD"},
+  {id:"prime_tiers_seul",      label:"Prime — Tiers seul",        desc:"Billet Prime GV/GVLC acheté pour un tiers — BAD fixe selon délai", mode:"BAD"},
 ];
 
 var TARIFS_OUIGO=[{id:"standard",label:"Standard OUIGO",desc:"Billet payant OUIGO — indemnisation en %", mode:"Virement"}];
@@ -1879,6 +1880,7 @@ function getShortTarifLabel(tarifId){
     "prime_titulaire":"Prime titulaire",
     "prime_fid_tiers":"Prime FID+tiers",
     "prime_gvt_tiers":"Prime GVT+tiers",
+    "prime_gvt_transitoire":"Prime GVT Transit.",
     "prime_tiers_seul":"Prime tiers",
     "groupe":"Groupe"
   };
@@ -2361,6 +2363,81 @@ function renderOpts(items){
   return wrap;
 }
 
+function renderOptsAccordion(items){
+  var wrap=div("opts");
+  items.forEach(function(item){
+    if(item._sep){wrap.appendChild(div("opts-group-label",item._sep));return;}
+    if(item.children&&item.children.length){
+      var isOpen=false;
+      var container=document.createElement("div");
+      container.style.cssText="position:relative;";
+      var btn=document.createElement("button");
+      btn.className="opt";
+      btn.innerHTML=(item.icon?"<span class='opt-icon'>"+item.icon+"</span>":"")+
+        "<div class='opt-content'><div class='opt-label'>"+item.label+"</div>"+
+        (item.desc?"<div class='opt-desc'>"+item.desc+"</div>":"")+
+        "</div>"+
+        "<span class='acc-chevron' style='width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--surface2);color:var(--tx-muted);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1),background 0.2s,color 0.2s;flex-shrink:0;'><i data-lucide='chevron-down'></i></span>";
+      var subCont=document.createElement("div");
+      subCont.style.cssText="overflow:hidden;max-height:0;opacity:0;transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1),opacity 0.28s ease,padding 0.3s ease;border:1.5px solid transparent;border-top:none;border-radius:0 0 18px 18px;padding:0 10px;background:var(--surface2);display:flex;flex-direction:column;gap:8px;box-sizing:border-box;";
+      var subHeight=28;item.children.forEach(function(child){subHeight+=child._sep?26:76;});
+      item.children.forEach(function(child){
+        if(child._sep){var sepEl=document.createElement("div");sepEl.className="opts-group-label";sepEl.style.cssText="margin:6px 4px 0;font-size:9px;";sepEl.textContent=child._sep;subCont.appendChild(sepEl);return;}
+        var subBtn=document.createElement("button");
+        subBtn.className="opt";
+        subBtn.style.cssText="border-left:3px solid var(--prune) !important;padding-left:12px;background:var(--surface);";
+        subBtn.innerHTML=(child.icon?"<span class='opt-icon' style='width:38px;height:38px;border-radius:10px;'>"+child.icon+"</span>":"")+
+          "<div class='opt-content'><div class='opt-label'>"+child.label+"</div>"+
+          (child.desc?"<div class='opt-desc'>"+child.desc+"</div>":"")+
+          "</div>"+
+          (child.badge?"<span class='opt-badge'>"+child.badge+"</span>":"");
+        subBtn.addEventListener("click",function(e){e.stopPropagation();child.cb();});
+        subCont.appendChild(subBtn);
+      });
+      btn.addEventListener("click",function(){
+        isOpen=!isOpen;
+        var chevron=btn.querySelector(".acc-chevron");
+        if(isOpen){
+          subCont.style.maxHeight=subHeight+"px";
+          subCont.style.opacity="1";
+          subCont.style.padding="10px 10px 14px";
+          subCont.style.borderColor="var(--prune)";
+          btn.style.borderBottomLeftRadius="0";
+          btn.style.borderBottomRightRadius="0";
+          btn.style.borderBottomColor="transparent";
+          btn.style.borderColor="var(--prune)";
+          if(chevron){chevron.style.transform="rotate(180deg)";chevron.style.background="var(--prune-lt)";chevron.style.color="var(--prune)";}
+        }else{
+          subCont.style.maxHeight="0";
+          subCont.style.opacity="0";
+          subCont.style.padding="0 10px";
+          subCont.style.borderColor="transparent";
+          btn.style.borderBottomLeftRadius="";
+          btn.style.borderBottomRightRadius="";
+          btn.style.borderBottomColor="";
+          btn.style.borderColor="";
+          if(chevron){chevron.style.transform="";chevron.style.background="";chevron.style.color="";}
+        }
+        if(window.lucide)setTimeout(function(){try{lucide.createIcons();}catch(e){}},10);
+      });
+      container.appendChild(btn);
+      container.appendChild(subCont);
+      wrap.appendChild(container);
+      return;
+    }
+    var btn=document.createElement("button");
+    btn.className="opt"+(item.danger?" danger":"");
+    btn.innerHTML=(item.icon?"<span class='opt-icon'>"+item.icon+"</span>":"")+
+      "<div class='opt-content'><div class='opt-label'>"+item.label+"</div>"+
+      (item.desc?"<div class='opt-desc'>"+item.desc+"</div>":"")+
+      "</div>"+
+      (item.badge?"<span class='opt-badge'>"+item.badge+"</span>":"");
+    btn.onclick=item.cb;
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
 function card(q,sub,content){
   var c=div("step-card");
   if(q)c.appendChild(div("step-q",q));
@@ -2682,23 +2759,43 @@ function sTarifIdentique(){
 function sTarifUnique(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
   var tarifs=getTarifsForCarrier(cid);
-  var carrierLabel=getCarrierLabel(cid);
 
-  return card("Type de billet","Sélectionnez le tarif pour les "+S.nbPass+" passagers",renderOpts(tarifs.map(function(t){
+  function confirmPrimeTarifUnique(tarifId,tarifLabel){
+    pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",tarifLabel);
+    var passengers=[];
+    for(var i=0;i<S.nbPass;i++){passengers.push({tarif:tarifId,price:0});}
+    set({buildingSegPassengers:passengers,selectedTarifUnique:null,step:"add_segment"});
+  }
+
+  var items=tarifs.map(function(t){
+    if(t.id==="prime_billet"){
+      return{
+        icon:"<i data-lucide='star'></i>",
+        label:"Billet Prime",
+        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
+        children:[
+          {_sep:"Titulaire — le voyageur est le titulaire"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarifUnique("prime_titulaire","Prime — Titulaire (FID)");}},
+          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarifUnique("prime_gvt_transitoire","Prime — GVT Transitoire");}},
+          {_sep:"Tiers — billet acheté pour un autre voyageur"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarifUnique("prime_fid_tiers","Prime — FID + Tiers");}},
+          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarifUnique("prime_gvt_tiers","Prime — GVT + Tiers");}},
+          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarifUnique("prime_tiers_seul","Prime — Tiers seul");}}
+        ]
+      };
+    }
     return{label:t.label,desc:t.desc,cb:function(){
-      if(t.id==="prime_tiers_billet"){
-        set({step:"prime_deposant_unique"});
-        return;
-      }
       pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",t.label);
       set({selectedTarifUnique:t.id,step:"price_unique"});
     }};
-  })));
+  });
+
+  return card("Type de billet","Sélectionnez le tarif pour les "+S.nbPass+" passagers",renderOptsAccordion(items));
 }
 
 function sPriceUnique(){
   var tarif=getTarifObj(S.selectedTarifUnique);
-  var isSpecialTarif=S.selectedTarifUnique==="max_loisirs"||S.selectedTarifUnique==="prime_titulaire"||S.selectedTarifUnique==="prime_fid_tiers"||S.selectedTarifUnique==="prime_gvt_tiers"||S.selectedTarifUnique==="prime_tiers_seul";
+  var isSpecialTarif=S.selectedTarifUnique==="max_loisirs"||S.selectedTarifUnique==="prime_titulaire"||S.selectedTarifUnique==="prime_fid_tiers"||S.selectedTarifUnique==="prime_gvt_tiers"||S.selectedTarifUnique==="prime_tiers_seul"||S.selectedTarifUnique==="prime_gvt_transitoire";
 
   if(isSpecialTarif){
     // Tarifs spéciaux: price=0, pas besoin de demander
@@ -2745,18 +2842,37 @@ function sTarifPassenger(idx){
   var desc=null;
   if(S.nbPass>1)desc="Sélectionnez le tarif pour le passager "+(idx+1);
 
-  return card(q,desc,renderOpts(tarifs.map(function(t){
+  function confirmPrimeTarif(tarifId,tarifLabel){
+    pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),tarifLabel);
+    pushH("<i data-lucide='euro'></i>","Prix P"+(idx+1),"0.00 € (tarif spécial)");
+    var newPassengers=S.buildingSegPassengers.concat([{tarif:tarifId,price:0}]);
+    if(idx+1<S.nbPass){
+      set({buildingSegPassengers:newPassengers,currentPassenger:idx+1,step:"tarif_passenger"});
+    }else{
+      set({buildingSegPassengers:newPassengers,step:"add_segment"});
+    }
+  }
+
+  var items=tarifs.map(function(t){
+    if(t.id==="prime_billet"){
+      return{
+        icon:"<i data-lucide='star'></i>",
+        label:"Billet Prime",
+        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
+        children:[
+          {_sep:"Titulaire — le voyageur est le titulaire"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarif("prime_titulaire","Prime — Titulaire (FID)");}},
+          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarif("prime_gvt_transitoire","Prime — GVT Transitoire");}},
+          {_sep:"Tiers — billet acheté pour un autre voyageur"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarif("prime_fid_tiers","Prime — FID + Tiers");}},
+          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarif("prime_gvt_tiers","Prime — GVT + Tiers");}},
+          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarif("prime_tiers_seul","Prime — Tiers seul");}}
+        ]
+      };
+    }
     return{label:t.label,desc:t.desc,cb:function(){
-      // Billet Prime pour un tiers : étape intermédiaire pour identifier le déposant
-      if(t.id==="prime_tiers_billet"){
-        set({currentPassenger:idx,step:"prime_deposant_passenger"});
-        return;
-      }
-
       pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),t.label);
-
-      // Tarifs spéciaux (price=0): ne pas demander le prix
-      var isSpecialTarif=t.id==="max_loisirs"||t.id==="prime_titulaire"||t.id==="prime_gvt_tiers";
+      var isSpecialTarif=t.id==="max_loisirs";
       if(isSpecialTarif){
         pushH("<i data-lucide='euro'></i>","Prix P"+(idx+1),"0.00 € (tarif spécial)");
         var newPassengers=S.buildingSegPassengers.concat([{tarif:t.id,price:0}]);
@@ -2769,7 +2885,9 @@ function sTarifPassenger(idx){
         set({buildingSegPassengers:S.buildingSegPassengers.concat([{tarif:t.id,price:null}]),currentPassenger:idx,step:"price_passenger"});
       }
     }};
-  })));
+  });
+
+  return card(q,desc,renderOptsAccordion(items));
 }
 
 function sPricePassenger(idx){
@@ -2899,20 +3017,40 @@ function sPrimeDeposantUnique(){
 function sTarif(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
   var tarifs=getTarifsForCarrier(cid);
-  return card("Type de billet / tarif ?",null,renderOpts(tarifs.map(function(t){
+
+  function confirmPrimeTarifSingle(tarifId,tarifLabel){
+    pushH("<i data-lucide='ticket'></i>","Tarif",tarifLabel);
+    set({buildingSeg:Object.assign({},S.buildingSeg,{tarif:tarifId,price:0}),step:"add_segment"});
+  }
+
+  var items=tarifs.map(function(t){
+    if(t.id==="prime_billet"){
+      return{
+        icon:"<i data-lucide='star'></i>",
+        label:"Billet Prime",
+        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
+        children:[
+          {_sep:"Titulaire — le voyageur est le titulaire"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarifSingle("prime_titulaire","Prime — Titulaire (FID)");}},
+          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarifSingle("prime_gvt_transitoire","Prime — GVT Transitoire");}},
+          {_sep:"Tiers — billet acheté pour un autre voyageur"},
+          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarifSingle("prime_fid_tiers","Prime — FID + Tiers");}},
+          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarifSingle("prime_gvt_tiers","Prime — GVT + Tiers");}},
+          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarifSingle("prime_tiers_seul","Prime — Tiers seul");}}
+        ]
+      };
+    }
     return{label:t.label,desc:t.desc,cb:function(){
-      if(t.id==="prime_tiers_billet"){
-        set({step:"prime_deposant_passenger",currentPassenger:0});
-        return;
-      }
       pushH("<i data-lucide='ticket'></i>","Tarif",t.label);
-      if(t.id==="max_loisirs"||t.id==="prime_titulaire"||t.id==="prime_gvt_tiers"){
+      if(t.id==="max_loisirs"){
         set({buildingSeg:Object.assign({},S.buildingSeg,{tarif:t.id,price:0}),step:"add_segment"});
       }else{
         set({buildingSeg:Object.assign({},S.buildingSeg,{tarif:t.id}),step:"price"});
       }
     }};
-  })));
+  });
+
+  return card("Type de billet / tarif ?",null,renderOptsAccordion(items));
 }
 
 function sPrice(){
@@ -3114,7 +3252,7 @@ function getRTCode_retard(segments){
   var hasTGVInt=eligSegs.some(function(s){return s.carrier==="tgv_int";});
   var hasTER=eligSegs.some(function(s){return s.carrier==="ter"||s.carrier==="ter_zou"||s.carrier==="ter_krono";});
   var hasPrime=eligSegs.some(function(s){
-    return s.tarif==="prime_titulaire"||s.tarif==="prime_fid_tiers"||s.tarif==="prime_gvt_tiers"||s.tarif==="prime_tiers_seul";
+    return s.tarif==="prime_titulaire"||s.tarif==="prime_fid_tiers"||s.tarif==="prime_gvt_tiers"||s.tarif==="prime_tiers_seul"||s.tarif==="prime_gvt_transitoire";
   });
   var hasGroupe=eligSegs.some(function(s){return s.tarif==="groupe";});
 
@@ -3197,6 +3335,11 @@ function sResultRetard(){
       var badAmt=getRBADAmount(S.delay);
       amt=badAmt*2;
       displayAmt=badAmt+"€ (GVT - BAD) + "+badAmt+"€ (Tiers - BAD)";
+      mode="BAD";
+    }
+    else if(seg.tarif==="prime_gvt_transitoire"){
+      amt=getRBADAmount(S.delay);
+      displayAmt=amt>0?amt+"€ (GVT Transitoire - BAD)":"Pas d'indemnisation (< 30 min)";
       mode="BAD";
     }
     // Règle générale: < 60 min = BAD seulement
@@ -3594,6 +3737,10 @@ function sResultFrais(){
       var badAmt=getRBADAmount(S.delay);
       amt=badAmt*2;
       displayAmt=badAmt+"€ (GVT) + "+badAmt+"€ (Tiers) BAD";
+      mode="BAD";
+    }else if(seg.tarif==="prime_gvt_transitoire"){
+      amt=getRBADAmount(S.delay);
+      displayAmt=amt>0?amt+"€ (GVT Transitoire - BAD)":"Pas d'indemnisation (< 30 min)";
       mode="BAD";
     }else if(S.delay<60){
       mode="BAD";
@@ -4296,6 +4443,8 @@ function render(){
           _amt=getRBADAmount(S.delay);_t+=_amt;
         }else if(seg.tarif==="prime_gvt_tiers"){
           _amt=getRBADAmount(S.delay)*2;_t+=_amt;
+        }else if(seg.tarif==="prime_gvt_transitoire"){
+          _amt=getRBADAmount(S.delay);_t+=_amt;
         }else{
           _ri=_isBD?{rate:getBilletDirectRate(seg.carrier,seg.carrier==="ouigo"&&S.ouigoDelay?S.ouigoDelay:S.delay),fix:null}:getRateInfo(seg.carrier,seg.tarif,S.delay);
           _amt=segAmt(seg.price,seg.tarif,_ri);_t+=_amt;
