@@ -3876,9 +3876,26 @@ function sResultFrais(){
     // En-tête: "Retard 230mn BD30"
     var txt = "Retard " + retardText + " " + modeText;
 
+    // Fusionner complement exceptionnel dans la ligne de base
+    var copyDetails = [];
+    if(S.exceptionalIndemnity){
+      var exCopyEntry = allDetailsRetard.find(function(d){ return d.mode === "Indemnisation exceptionnelle"; });
+      allDetailsRetard.forEach(function(d){
+        if(d.mode === "Indemnisation exceptionnelle") return;
+        var baseCarrier = exCopyEntry ? exCopyEntry.carrier.replace(" (COMPLÉMENT)","") : null;
+        if(exCopyEntry && d.carrier === baseCarrier){
+          copyDetails.push({carrier:d.carrier, amt:d.amt+exCopyEntry.amt, mode:d.mode+" Indemnisation exceptionnelle "+S.exceptionalIndemnity.rate+"%"});
+        } else {
+          copyDetails.push(d);
+        }
+      });
+    } else {
+      copyDetails = allDetailsRetard;
+    }
+
     // Grouper les segments identiques (carrier + montant + mode)
     var segmentGroups = {};
-    allDetailsRetard.forEach(function(d){
+    copyDetails.forEach(function(d){
       var amountStr = d.mode.includes("Points")
         ? d.amt.toFixed(0)  // Points: entier sans €
         : d.amt.toFixed(2) + "€";  // Euros avec symbole
@@ -4583,7 +4600,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7.2"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7.3"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
