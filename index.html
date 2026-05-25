@@ -569,6 +569,15 @@ body {
   margin: 16px 0;
 }
 
+.delay-manual-box {
+  background: var(--glass2);
+  backdrop-filter: blur(48px);
+  border: 1.5px solid var(--border);
+  border-radius: 28px;
+  padding: 20px 24px 22px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
 .delay-manual-label {
   font-size: 11px;
   color: var(--tx-muted);
@@ -1527,6 +1536,18 @@ body::after {
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.62);
 }
 [data-theme="dark"] .delay-display {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.delay-manual-box {
+  border-radius: 22px;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.62);
+}
+[data-theme="dark"] .delay-manual-box {
   background: rgba(255,255,255,0.05);
   border-color: var(--border);
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.05);
@@ -2529,19 +2550,21 @@ function sDelay(){
 
   wrap.appendChild(timeInputs);
 
+  // Bloc saisie directe minutes (avant le résultat)
+  var manualBox=div("delay-manual-box");
+  manualBox.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
+  var manualRow=div("delay-manual-row");
+  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
+  manualRow.appendChild(div("delay-min-unit","min"));
+  manualBox.appendChild(manualRow);
+  wrap.appendChild(manualBox);
+
+  // Bloc résultat calculé (après la saisie)
   var disp=div("delay-display");
   disp.innerHTML="<div class='delay-value' id='delay-value'>"+localDelay+"</div><div class='delay-unit'>min</div><div class='delay-band "+delayBand.css+"' id='delay-band'>"+delayBand.label+"</div>";
   wrap.appendChild(disp);
 
-  wrap.appendChild(div("","<div class='delay-separator'></div>"));
-  wrap.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
-
-  var manualRow=div("delay-manual-row");
-  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
-  manualRow.appendChild(div("delay-min-unit","min"));
-  wrap.appendChild(manualRow);
-
-  var btn=document.createElement("button");btn.className="btn-confirm";btn.style.marginTop="20px";btn.textContent="Valider →";
+  var btn=document.createElement("button");btn.className="btn-confirm";btn.textContent="Valider →";
   btn.onclick=function(){
     if(localDelay<0){alert("Retard invalide");return;}
     // Si on édite une valeur existante (dernière ligne = "Retard"), remplacer au lieu d'ajouter
