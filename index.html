@@ -1533,21 +1533,6 @@ body::after {
 }
 .delay-value { font-family: 'Inter', monospace; font-variant-numeric: tabular-nums; }
 .delay-band { border-radius: 99px; font-weight: 700; letter-spacing: 0.7px; font-size: 10px; }
-.delay-manual-box {
-  border-radius: 22px;
-  background: rgba(255,255,255,0.65);
-  backdrop-filter: blur(30px);
-  border: 1px solid rgba(255,255,255,0.55);
-  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.62);
-  padding: 20px 24px;
-  text-align: center;
-  margin-bottom: 12px;
-}
-[data-theme="dark"] .delay-manual-box {
-  background: rgba(255,255,255,0.05);
-  border-color: var(--border);
-  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.05);
-}
 
 /* Footer */
 .footer { opacity: 0.35; font-weight: 500; letter-spacing: 0.2px; }
@@ -2544,17 +2529,17 @@ function sDelay(){
 
   wrap.appendChild(timeInputs);
 
-  var manualBox=div("delay-manual-box");
-  manualBox.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
-  var manualRow=div("delay-manual-row");
-  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
-  manualRow.appendChild(div("delay-min-unit","min"));
-  manualBox.appendChild(manualRow);
-  wrap.appendChild(manualBox);
-
   var disp=div("delay-display");
   disp.innerHTML="<div class='delay-value' id='delay-value'>"+localDelay+"</div><div class='delay-unit'>min</div><div class='delay-band "+delayBand.css+"' id='delay-band'>"+delayBand.label+"</div>";
   wrap.appendChild(disp);
+
+  wrap.appendChild(div("","<div class='delay-separator'></div>"));
+  wrap.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
+
+  var manualRow=div("delay-manual-row");
+  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
+  manualRow.appendChild(div("delay-min-unit","min"));
+  wrap.appendChild(manualRow);
 
   var btn=document.createElement("button");btn.className="btn-confirm";btn.style.marginTop="20px";btn.textContent="Valider →";
   btn.onclick=function(){
@@ -3675,30 +3660,103 @@ function sFraisType(){
 
 function sFraisMontant(){
   var frais=FRAIS_TYPES.find(function(f){return f.id===S.buildingSeg.fraisType;});
+  var isHotel=frais.id.indexOf("hotel_")===0;
   var wrap=div("input-row");
 
-  // Déterminer le plafond total et le libellé
-  var multiplier=1;
-  var maxTotal=frais.max; // null = sans plafond
-  var multiplyNote="";
-  if(frais.max==null){
-    multiplyNote=" (sans plafond fixe — remboursement du surcoût sur justificatif)";
-  }else if(frais.unit==="voyageur"||frais.unit==="passager"){
-    multiplier=Math.max(1,S.nbPass);
-    maxTotal=frais.max*Math.max(1,S.nbPass);
-    multiplyNote=" (plafond : "+frais.max+"€/voyageur × "+Math.max(1,S.nbPass)+" = "+maxTotal+"€ max au total)";
+  // État DIGIPEC local (mutable dans les closures)
+  var digipecActive=false;
+  var digipecCapValue=frais.max||0;
+
+  function getEffectiveCap(){
+    if(digipecActive&&digipecCapValue>0) return digipecCapValue;
+    return frais.max;
+  }
+  function getMaxTotal(cap){
+    if(cap==null) return null;
+    if(frais.unit==="voyageur"||frais.unit==="passager") return cap*Math.max(1,S.nbPass);
+    return cap;
+  }
+  function buildNote(cap){
+    if(cap==null) return " (sans plafond fixe — remboursement du surcoût sur justificatif)";
+    if(frais.unit==="voyageur"||frais.unit==="passager"){
+      var mt=cap*Math.max(1,S.nbPass);
+      return " (plafond"+(digipecActive?" DIGIPEC":"")+": "+cap+"€/pass × "+Math.max(1,S.nbPass)+" = "+mt+"€ max)";
+    }
+    return "";
   }
 
-  wrap.appendChild(div("step-sub",frais.label+" - Montant TOTAL (€) :"+multiplyNote));
-  var i=inp("number","0");i.min=0;if(maxTotal!=null){i.max=maxTotal;}i.step="0.01";
+  // Label note (mis à jour dynamiquement)
+  var noteEl=div("step-sub","");
+  function updateNote(){ noteEl.textContent=frais.label+" - Montant TOTAL (€) :"+buildNote(getEffectiveCap()); }
+
+  // Input montant
+  var i=inp("number","0");i.min=0;i.step="0.01";
+  function updateInputMax(){
+    var mt=getMaxTotal(getEffectiveCap());
+    if(mt!=null) i.max=mt; else i.removeAttribute("max");
+  }
+
+  // Bloc DIGIPEC (hébergement uniquement)
+  if(isHotel){
+    var digipecRow=document.createElement("div");
+    digipecRow.style.cssText="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);";
+
+    var digipecCb=document.createElement("input");
+    digipecCb.type="checkbox";digipecCb.id="digipec-cb";
+    digipecCb.style.cssText="width:16px;height:16px;cursor:pointer;accent-color:var(--prune);flex-shrink:0;";
+
+    var digipecLbl=document.createElement("label");
+    digipecLbl.htmlFor="digipec-cb";
+    digipecLbl.style.cssText="font-size:12px;font-weight:700;color:var(--prune);cursor:pointer;letter-spacing:0.05em;";
+    digipecLbl.textContent="Accord DIGIPEC";
+
+    var digipecCapRow=document.createElement("div");
+    digipecCapRow.style.cssText="display:none;align-items:center;gap:6px;margin-left:auto;";
+
+    var digipecCapLbl=document.createElement("span");
+    digipecCapLbl.style.cssText="font-size:11px;color:var(--tx-muted);";
+    digipecCapLbl.textContent="Plafond accordé (€/pass) :";
+
+    var digipecCapInp=inp("number",String(frais.max||0));
+    digipecCapInp.min=0;digipecCapInp.step="1";
+    digipecCapInp.style.cssText="width:70px;font-size:13px;font-weight:700;text-align:center;";
+
+    digipecCapRow.appendChild(digipecCapLbl);
+    digipecCapRow.appendChild(digipecCapInp);
+
+    digipecCb.onchange=function(){
+      digipecActive=this.checked;
+      digipecCapRow.style.display=digipecActive?"flex":"none";
+      if(digipecActive) digipecCapValue=parseFloat(digipecCapInp.value)||0;
+      updateNote();updateInputMax();
+    };
+    digipecCapInp.oninput=function(){
+      digipecCapValue=parseFloat(this.value)||0;
+      updateNote();updateInputMax();
+    };
+
+    digipecRow.appendChild(digipecCb);
+    digipecRow.appendChild(digipecLbl);
+    digipecRow.appendChild(digipecCapRow);
+    wrap.appendChild(digipecRow);
+  }
+
+  updateNote();
+  wrap.appendChild(noteEl);
+  updateInputMax();
   wrap.appendChild(i);
+
   var btn=document.createElement("button");btn.className="btn-confirm";btn.textContent="Ajouter →";
   btn.onclick=function(){
+    var cap=getEffectiveCap();
+    var mt=getMaxTotal(cap);
     var rawInput=parseFloat(i.value)||0;
-    var finalAmt=maxTotal!=null?Math.min(rawInput,maxTotal):rawInput;
+    var finalAmt=mt!=null?Math.min(rawInput,mt):rawInput;
     var nbp=Math.max(1,S.nbPass);
-    S.fraisList.push({type:frais.id,montant:rawInput,finalAmt:finalAmt,maxPerPerson:frais.max,nbPassUsed:nbp,unit:frais.unit});
-    pushH(frais.icon,frais.label,finalAmt.toFixed(2)+"€ (total)");
+    var entry={type:frais.id,montant:rawInput,finalAmt:finalAmt,maxPerPerson:cap,nbPassUsed:nbp,unit:frais.unit};
+    if(digipecActive){entry.digipec=true;entry.digipecCap=digipecCapValue;}
+    S.fraisList.push(entry);
+    pushH(frais.icon,frais.label+(digipecActive?" [DIGIPEC]":""),finalAmt.toFixed(2)+"€ (total)");
     set({step:"frais_suite"});
   };
   wrap.appendChild(btn);
@@ -3822,7 +3880,7 @@ function sResultFrais(){
     var fraisType=FRAIS_TYPES.find(function(ft){return ft.id===f.type;});
     var finalAmt=f.finalAmt!==undefined?f.finalAmt:f.montant;
     totalFrais+=finalAmt;
-    fraisDetails.push({type:fraisType,finalAmt:finalAmt,montant:f.montant,maxPerPerson:f.maxPerPerson,nbPassUsed:f.nbPassUsed,unit:f.unit});
+    fraisDetails.push({type:fraisType,finalAmt:finalAmt,montant:f.montant,maxPerPerson:f.maxPerPerson,nbPassUsed:f.nbPassUsed,unit:f.unit,digipec:f.digipec,digipecCap:f.digipecCap});
   });
 
   // Total combiné
@@ -3856,11 +3914,12 @@ function sResultFrais(){
       var item=div("breakdown-item");
       var capHtml="";
       var isPerPerson=fd.unit==="voyageur"||fd.unit==="passager";
+      var digipecBadge=fd.digipec?"<span style='background:var(--prune);color:white;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.05em;margin-right:5px;'>DIGIPEC</span>":"";
       if(fd.montant!==undefined&&fd.maxPerPerson&&fd.montant>fd.finalAmt){
         var nbp=fd.nbPassUsed||1;
-        capHtml="<div style='font-size:10px;color:var(--amber);margin-top:3px;'>Facture "+fd.montant.toFixed(2)+"€ → plafonné "+fd.maxPerPerson+"€/pass × "+nbp+" = "+fd.finalAmt.toFixed(2)+"€</div>";
+        capHtml="<div style='font-size:10px;color:var(--amber);margin-top:3px;'>"+digipecBadge+"Facture "+fd.montant.toFixed(2)+"€ → plafonné "+fd.maxPerPerson+"€/pass × "+nbp+" = "+fd.finalAmt.toFixed(2)+"€</div>";
       }else if(fd.montant!==undefined&&isPerPerson&&fd.nbPassUsed){
-        capHtml="<div style='font-size:10px;color:var(--tx-muted);margin-top:3px;'>Facture "+fd.montant.toFixed(2)+"€ — plafond "+fd.maxPerPerson+"€/pass × "+fd.nbPassUsed+"</div>";
+        capHtml="<div style='font-size:10px;color:var(--tx-muted);margin-top:3px;'>"+digipecBadge+"Facture "+fd.montant.toFixed(2)+"€ — plafond "+fd.maxPerPerson+"€/pass × "+fd.nbPassUsed+"</div>";
       }
       item.innerHTML="<div style='flex:1;'><div style='font-weight:600;color:var(--tx);'>"+fd.type.label+"</div><div style='font-size:11px;color:var(--tx-muted);margin-top:2px;'>"+fd.type.note+"</div>"+capHtml+"</div><div style='text-align:right;'><div style='font-weight:700;color:var(--prune);font-size:14px;'>"+fd.finalAmt.toFixed(2)+"€</div></div>";
       fraisBreakdown.appendChild(item);
@@ -3936,7 +3995,7 @@ function sResultFrais(){
         var baseMontant = fd.type.unit === "voyageur" || fd.type.unit === "passager"
           ? (fd.finalAmt / S.nbPass).toFixed(2)
           : fd.finalAmt.toFixed(2);
-        fraisComposition.push(fd.type.label.toLowerCase() + " " + baseMontant + unit);
+        fraisComposition.push(fd.type.label.toLowerCase()+(fd.digipec?" [DIGIPEC]":"")+" "+baseMontant+unit);
       });
       txt += " § Frais éligible " + totalFrais.toFixed(2) + "€ (" + fraisComposition.join(" + ") + ")";
     }
@@ -4615,7 +4674,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.7.4"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.8"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
