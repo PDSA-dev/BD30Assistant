@@ -1752,9 +1752,12 @@ var TARIFS_TER=[
   {id:"groupe",  label:"Tarif Groupe",desc:"Un seul prix pour l'ensemble des voyageurs", mode:"Virement"},
 ];
 
-function getTarifsForCarrier(cid){
+function getTarifsForCarrier(cid,nbPass){
   if(cid==="ouigo")return TARIFS_OUIGO;
-  if(cid==="ter"||cid==="ter_zou"||cid==="ter_krono")return TARIFS_TER;
+  if(cid==="ter"||cid==="ter_zou"||cid==="ter_krono"){
+    if(nbPass!==undefined&&nbPass<3)return TARIFS_TER.filter(function(t){return t.id!=="groupe";});
+    return TARIFS_TER;
+  }
   return TARIFS;
 }
 
@@ -2673,7 +2676,7 @@ function sTerZouSelection(){
   tariffDiv.appendChild(tariffLabel);
 
   var selectedTarif=null;
-  var tarifOptions=TARIFS_TER; // Standard et Groupe pour TER ZOU
+  var tarifOptions=S.nbPass>=3?TARIFS_TER:TARIFS_TER.filter(function(t){return t.id!=="groupe";}); // Groupe masqué si < 3 passagers
 
   tarifOptions.forEach(function(tarif){
     var optionDiv=document.createElement("div");
@@ -2781,7 +2784,15 @@ function sTarifIdentique(){
 
 function sTarifUnique(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid);
+  var tarifs=getTarifsForCarrier(cid,S.nbPass);
+
+  // Auto-sélection si un seul tarif disponible (ex: TER < 3 passagers → Standard uniquement)
+  if(tarifs.length===1){
+    var autoTarif=tarifs[0];
+    pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",autoTarif.label);
+    set({selectedTarifUnique:autoTarif.id,step:"price_unique"});
+    return;
+  }
 
   function confirmPrimeTarifUnique(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",tarifLabel);
@@ -2860,7 +2871,16 @@ function sPriceUnique(){
 
 function sTarifPassenger(idx){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid);
+  var tarifs=getTarifsForCarrier(cid,S.nbPass);
+
+  // Auto-sélection si un seul tarif disponible (ex: TER < 3 passagers → Standard uniquement)
+  if(tarifs.length===1){
+    var autoTarif=tarifs[0];
+    pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),autoTarif.label);
+    set({buildingSegPassengers:S.buildingSegPassengers.concat([{tarif:autoTarif.id,price:null}]),currentPassenger:idx,step:"price_passenger"});
+    return;
+  }
+
   var q="Passager "+(idx+1)+" / "+S.nbPass+" — Type de billet ?";
   var desc=null;
   if(S.nbPass>1)desc="Sélectionnez le tarif pour le passager "+(idx+1);
@@ -3039,7 +3059,7 @@ function sPrimeDeposantUnique(){
 
 function sTarif(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid);
+  var tarifs=getTarifsForCarrier(cid,S.nbPass);
 
   function confirmPrimeTarifSingle(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif",tarifLabel);
