@@ -569,15 +569,6 @@ body {
   margin: 16px 0;
 }
 
-.delay-manual-box {
-  background: var(--glass2);
-  backdrop-filter: blur(48px);
-  border: 1.5px solid var(--border);
-  border-radius: 28px;
-  padding: 20px 24px 22px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
 .delay-manual-label {
   font-size: 11px;
   color: var(--tx-muted);
@@ -1540,18 +1531,6 @@ body::after {
   border-color: var(--border);
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.delay-manual-box {
-  border-radius: 22px;
-  background: rgba(255,255,255,0.65);
-  backdrop-filter: blur(30px);
-  border: 1px solid rgba(255,255,255,0.55);
-  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.62);
-}
-[data-theme="dark"] .delay-manual-box {
-  background: rgba(255,255,255,0.05);
-  border-color: var(--border);
-  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.05);
-}
 .delay-value { font-family: 'Inter', monospace; font-variant-numeric: tabular-nums; }
 .delay-band { border-radius: 99px; font-weight: 700; letter-spacing: 0.7px; font-size: 10px; }
 
@@ -1752,12 +1731,9 @@ var TARIFS_TER=[
   {id:"groupe",  label:"Tarif Groupe",desc:"Un seul prix pour l'ensemble des voyageurs", mode:"Virement"},
 ];
 
-function getTarifsForCarrier(cid,nbPass){
+function getTarifsForCarrier(cid){
   if(cid==="ouigo")return TARIFS_OUIGO;
-  if(cid==="ter"||cid==="ter_zou"||cid==="ter_krono"){
-    if(nbPass!==undefined&&nbPass<3)return TARIFS_TER.filter(function(t){return t.id!=="groupe";});
-    return TARIFS_TER;
-  }
+  if(cid==="ter"||cid==="ter_zou"||cid==="ter_krono")return TARIFS_TER;
   return TARIFS;
 }
 
@@ -2553,21 +2529,19 @@ function sDelay(){
 
   wrap.appendChild(timeInputs);
 
-  // Bloc saisie directe minutes (avant le résultat)
-  var manualBox=div("delay-manual-box");
-  manualBox.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
-  var manualRow=div("delay-manual-row");
-  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
-  manualRow.appendChild(div("delay-min-unit","min"));
-  manualBox.appendChild(manualRow);
-  wrap.appendChild(manualBox);
-
-  // Bloc résultat calculé (après la saisie)
   var disp=div("delay-display");
   disp.innerHTML="<div class='delay-value' id='delay-value'>"+localDelay+"</div><div class='delay-unit'>min</div><div class='delay-band "+delayBand.css+"' id='delay-band'>"+delayBand.label+"</div>";
   wrap.appendChild(disp);
 
-  var btn=document.createElement("button");btn.className="btn-confirm";btn.textContent="Valider →";
+  wrap.appendChild(div("","<div class='delay-separator'></div>"));
+  wrap.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
+
+  var manualRow=div("delay-manual-row");
+  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
+  manualRow.appendChild(div("delay-min-unit","min"));
+  wrap.appendChild(manualRow);
+
+  var btn=document.createElement("button");btn.className="btn-confirm";btn.style.marginTop="20px";btn.textContent="Valider →";
   btn.onclick=function(){
     if(localDelay<0){alert("Retard invalide");return;}
     // Si on édite une valeur existante (dernière ligne = "Retard"), remplacer au lieu d'ajouter
@@ -2676,7 +2650,7 @@ function sTerZouSelection(){
   tariffDiv.appendChild(tariffLabel);
 
   var selectedTarif=null;
-  var tarifOptions=S.nbPass>=3?TARIFS_TER:TARIFS_TER.filter(function(t){return t.id!=="groupe";}); // Groupe masqué si < 3 passagers
+  var tarifOptions=TARIFS_TER; // Standard et Groupe pour TER ZOU
 
   tarifOptions.forEach(function(tarif){
     var optionDiv=document.createElement("div");
@@ -2784,15 +2758,7 @@ function sTarifIdentique(){
 
 function sTarifUnique(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid,S.nbPass);
-
-  // Auto-sélection si un seul tarif disponible (ex: TER < 3 passagers → Standard uniquement)
-  if(tarifs.length===1){
-    var autoTarif=tarifs[0];
-    pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",autoTarif.label);
-    set({selectedTarifUnique:autoTarif.id,step:"price_unique"});
-    return;
-  }
+  var tarifs=getTarifsForCarrier(cid);
 
   function confirmPrimeTarifUnique(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",tarifLabel);
@@ -2871,16 +2837,7 @@ function sPriceUnique(){
 
 function sTarifPassenger(idx){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid,S.nbPass);
-
-  // Auto-sélection si un seul tarif disponible (ex: TER < 3 passagers → Standard uniquement)
-  if(tarifs.length===1){
-    var autoTarif=tarifs[0];
-    pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),autoTarif.label);
-    set({buildingSegPassengers:S.buildingSegPassengers.concat([{tarif:autoTarif.id,price:null}]),currentPassenger:idx,step:"price_passenger"});
-    return;
-  }
-
+  var tarifs=getTarifsForCarrier(cid);
   var q="Passager "+(idx+1)+" / "+S.nbPass+" — Type de billet ?";
   var desc=null;
   if(S.nbPass>1)desc="Sélectionnez le tarif pour le passager "+(idx+1);
@@ -3059,7 +3016,7 @@ function sPrimeDeposantUnique(){
 
 function sTarif(){
   var cid=S.buildingSeg&&S.buildingSeg.carrier;
-  var tarifs=getTarifsForCarrier(cid,S.nbPass);
+  var tarifs=getTarifsForCarrier(cid);
 
   function confirmPrimeTarifSingle(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif",tarifLabel);
@@ -3224,57 +3181,73 @@ function sExceptionalIndemnity(){
   // Récupérer les segments TGV INOUI + Intercités
   var tgvSegs=S.segments.filter(function(s){return s.carrier==="tgv_dom"||s.carrier==="tgv_int"||s.carrier==="intercites"});
 
-  // Étape 1: Sélectionner le segment (si plusieurs TGV)
+  // Regrouper par transporteur (un train = un groupe, peu importe le nombre de passagers)
+  var carrierGroups={};
+  tgvSegs.forEach(function(s){
+    if(!carrierGroups[s.carrier])carrierGroups[s.carrier]=[];
+    carrierGroups[s.carrier].push(s);
+  });
+  var distinctCarriers=Object.keys(carrierGroups);
+
+  // Étape 1: Sélectionner le transporteur (si plusieurs TGV/IC distincts)
   if(!S.selectedTGVForException){
-    if(tgvSegs.length===1){
-      // Un seul TGV → aller directement au taux
-      set({selectedTGVForException:tgvSegs[0].id});
-      return sExceptionalIndemnity(); // Appel récursif
+    if(distinctCarriers.length===1){
+      // Un seul transporteur TGV/IC → sélection automatique (sans re-render)
+      S.selectedTGVForException=distinctCarriers[0];
+      // On tombe directement dans l'étape 2 ci-dessous
     }else{
-      // Plusieurs TGV → demander de choisir
-      var opts=renderOpts(tgvSegs.map(function(seg,idx){
-        var label="Segment "+(idx+1)+" — "+getCarrierLabel(seg.carrier)+" "+seg.tarif;
-        return{icon:"<i data-lucide='train'></i>",label:label,desc:seg.price.toFixed(2)+" €",cb:function(){
-          set({selectedTGVForException:seg.id});
+      // Plusieurs transporteurs TGV/IC distincts → demander de choisir
+      var opts=renderOpts(distinctCarriers.map(function(carrier){
+        var segs=carrierGroups[carrier];
+        var totalPriceGroup=segs.reduce(function(sum,s){return sum+s.price;},0);
+        var nbPass=segs.length;
+        var label=getCarrierLabel(carrier)+" — "+nbPass+" passager"+(nbPass>1?"s":"");
+        return{icon:"<i data-lucide='train'></i>",label:label,desc:totalPriceGroup.toFixed(2)+" € (total passagers)",cb:function(){
+          set({selectedTGVForException:carrier});
         }};
       }));
-      return card("Quel segment TGV INOUI?","Sélectionne le segment concerné par l'indemnisation exceptionnelle",opts);
+      return card("Quel segment TGV INOUI?","Sélectionne le transporteur concerné par l'indemnisation exceptionnelle",opts);
     }
   }
 
   // Étape 2: Choisir le taux d'indemnisation exceptionnelle
-  var selectedSeg=S.segments.find(function(s){return s.id===S.selectedTGVForException;});
+  // Calcul sur l'ensemble des passagers du transporteur sélectionné
+  var selectedCarrier=S.selectedTGVForException;
+  var segsForCarrier=S.segments.filter(function(s){return s.carrier===selectedCarrier;});
+  var totalPrice=segsForCarrier.reduce(function(sum,s){return sum+s.price;},0);
+  var totalRegulatory=segsForCarrier.reduce(function(sum,s){
+    var ri=getRateInfo(s.carrier,s.tarif,S.delay);
+    return sum+segAmt(s.price,s.tarif,ri);
+  },0);
+  var nbPassCarrier=segsForCarrier.length;
 
-  // Calculer la compensation réglementaire existante pour ce segment
-  var ri=getRateInfo(selectedSeg.carrier,selectedSeg.tarif,S.delay);
-  var regulatoryAmt=segAmt(selectedSeg.price,selectedSeg.tarif,ri);
-
-  // Fonction helper pour calculer le complément
+  // Fonction helper pour calculer le complément (sur la totalité des passagers)
   function calcComplementAmt(rate){
-    var finalAmt=selectedSeg.price*(rate/100);
-    var complement=Math.max(0,finalAmt-regulatoryAmt);
+    var finalAmt=totalPrice*(rate/100);
+    var complement=Math.max(0,finalAmt-totalRegulatory);
     return complement;
   }
 
+  var passLabel=nbPassCarrier>1?" ("+nbPassCarrier+" passagers)":"";
   var opts=renderOpts([
-    {icon:"<i data-lucide='percent'></i>",label:"100% du billet",desc:"Complément pour atteindre 100€ (si billet 100€)",cb:function(){
+    {icon:"<i data-lucide='percent'></i>",label:"100% du billet",desc:"Complément pour atteindre 100%",cb:function(){
       var complementAmt=calcComplementAmt(100);
-      set({exceptionalIndemnity:{segmentId:selectedSeg.id,rate:100,amount:complementAmt,regulatory:regulatoryAmt},selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{carrier:selectedCarrier,totalPrice:totalPrice,rate:100,amount:complementAmt,regulatory:totalRegulatory},selectedTGVForException:null,step:"result_retard"});
     }},
-    {icon:"<i data-lucide='percent'></i>",label:"150% du billet",desc:"Complément pour atteindre 150€ (si billet 100€)",cb:function(){
+    {icon:"<i data-lucide='percent'></i>",label:"150% du billet",desc:"Complément pour atteindre 150%",cb:function(){
       var complementAmt=calcComplementAmt(150);
-      set({exceptionalIndemnity:{segmentId:selectedSeg.id,rate:150,amount:complementAmt,regulatory:regulatoryAmt},selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{carrier:selectedCarrier,totalPrice:totalPrice,rate:150,amount:complementAmt,regulatory:totalRegulatory},selectedTGVForException:null,step:"result_retard"});
     }},
-    {icon:"<i data-lucide='percent'></i>",label:"200% du billet",desc:"Complément pour atteindre 200€ (si billet 100€)",cb:function(){
+    {icon:"<i data-lucide='percent'></i>",label:"200% du billet",desc:"Complément pour atteindre 200%",cb:function(){
       var complementAmt=calcComplementAmt(200);
-      set({exceptionalIndemnity:{segmentId:selectedSeg.id,rate:200,amount:complementAmt,regulatory:regulatoryAmt},selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{carrier:selectedCarrier,totalPrice:totalPrice,rate:200,amount:complementAmt,regulatory:totalRegulatory},selectedTGVForException:null,step:"result_retard"});
     }},
-    {icon:"<i data-lucide='percent'></i>",label:"300% du billet",desc:"Complément pour atteindre 300€ (si billet 100€)",cb:function(){
+    {icon:"<i data-lucide='percent'></i>",label:"300% du billet",desc:"Complément pour atteindre 300%",cb:function(){
       var complementAmt=calcComplementAmt(300);
-      set({exceptionalIndemnity:{segmentId:selectedSeg.id,rate:300,amount:complementAmt,regulatory:regulatoryAmt},selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{carrier:selectedCarrier,totalPrice:totalPrice,rate:300,amount:complementAmt,regulatory:totalRegulatory},selectedTGVForException:null,step:"result_retard"});
     }},
   ]);
-  return card("Indemnisation exceptionnelle","Sélectionne le niveau de compensation — "+getCarrierLabel(selectedSeg.carrier)+" ("+selectedSeg.price.toFixed(2)+" €) | Compensation actuelle: "+regulatoryAmt.toFixed(2)+" €",opts);
+  return card("Indemnisation exceptionnelle","Sélectionne le niveau de compensation — "+getCarrierLabel(selectedCarrier)+passLabel+" ("+totalPrice.toFixed(2)+" € total) | Compensation régl. actuelle : "+totalRegulatory.toFixed(2)+" €",opts);
 }
 
 function getCompensationRule(){
@@ -3460,22 +3433,21 @@ function sResultRetard(){
   if(S.exceptionalIndemnity){
     total+=S.exceptionalIndemnity.amount;
     // Ajouter une ligne dans allDetails pour l'indemnisation exceptionnelle
-    var exceptionSeg=segments.find(function(s){return s.id===S.exceptionalIndemnity.segmentId;});
-    if(exceptionSeg){
-      var finalAmt=exceptionSeg.price*(S.exceptionalIndemnity.rate/100);
-      allDetails.push({
-        idx:-1,
-        carrier:getCarrierLabel(exceptionSeg.carrier)+" (COMPLÉMENT)",
-        tarif:"Indemnisation exceptionnelle",
-        price:exceptionSeg.price,
-        rate:S.exceptionalIndemnity.rate,
-        fix:null,
-        mode:"Indemnisation exceptionnelle",
-        amt:S.exceptionalIndemnity.amount,
-        points:null,
-        displayAmt:"Complément: "+S.exceptionalIndemnity.amount.toFixed(2)+" € (pour atteindre "+finalAmt.toFixed(2)+" €, soit "+S.exceptionalIndemnity.rate+"%)"
-      });
-    }
+    var exCarrierLabel=getCarrierLabel(S.exceptionalIndemnity.carrier);
+    var exTotalPrice=S.exceptionalIndemnity.totalPrice;
+    var exFinalAmt=exTotalPrice*(S.exceptionalIndemnity.rate/100);
+    allDetails.push({
+      idx:-1,
+      carrier:exCarrierLabel+" (COMPLÉMENT)",
+      tarif:"Indemnisation exceptionnelle",
+      price:exTotalPrice,
+      rate:S.exceptionalIndemnity.rate,
+      fix:null,
+      mode:"Indemnisation exceptionnelle",
+      amt:S.exceptionalIndemnity.amount,
+      points:null,
+      displayAmt:"Complément: "+S.exceptionalIndemnity.amount.toFixed(2)+" € (pour atteindre "+exFinalAmt.toFixed(2)+" €, soit "+S.exceptionalIndemnity.rate+"%)"
+    });
   }
 
   var c=div("result-card");
@@ -3900,19 +3872,18 @@ function sResultFrais(){
 
   if(S.exceptionalIndemnity){
     indemniteRetard+=S.exceptionalIndemnity.amount;
-    var exSeg=segments.find(function(s){return s.id===S.exceptionalIndemnity.segmentId;});
-    if(exSeg){
-      var exFinalAmt=exSeg.price*(S.exceptionalIndemnity.rate/100);
-      allDetailsRetard.push({
-        carrier:getCarrierLabel(exSeg.carrier)+" (COMPLÉMENT)",
-        tarif:"Indemnisation exceptionnelle",
-        price:exSeg.price,
-        rate:S.exceptionalIndemnity.rate,
-        amt:S.exceptionalIndemnity.amount,
-        mode:"Indemnisation exceptionnelle",
-        displayAmt:"Complément : "+S.exceptionalIndemnity.amount.toFixed(2)+"€ (pour atteindre "+exFinalAmt.toFixed(2)+"€, soit "+S.exceptionalIndemnity.rate+"%)"
-      });
-    }
+    var exCarrierLabelBD=getCarrierLabel(S.exceptionalIndemnity.carrier);
+    var exTotalPriceBD=S.exceptionalIndemnity.totalPrice;
+    var exFinalAmtBD=exTotalPriceBD*(S.exceptionalIndemnity.rate/100);
+    allDetailsRetard.push({
+      carrier:exCarrierLabelBD+" (COMPLÉMENT)",
+      tarif:"Indemnisation exceptionnelle",
+      price:exTotalPriceBD,
+      rate:S.exceptionalIndemnity.rate,
+      amt:S.exceptionalIndemnity.amount,
+      mode:"Indemnisation exceptionnelle",
+      displayAmt:"Complément : "+S.exceptionalIndemnity.amount.toFixed(2)+"€ (pour atteindre "+exFinalAmtBD.toFixed(2)+"€, soit "+S.exceptionalIndemnity.rate+"%)"
+    });
   }
 
   // Calculer les frais
@@ -4717,7 +4688,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.8"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v1.8.2"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
