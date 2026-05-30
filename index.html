@@ -1702,6 +1702,233 @@ html { scroll-behavior: smooth; }
   .pm-sg { opacity: 1 !important; transform: none !important; transition: none !important; }
   html { scroll-behavior: auto !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* INTRO SCENE — #s-intro                                                     */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+#s-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: radial-gradient(ellipse at 50% 40%, #1a0a14 0%, #0A0A0F 65%);
+  overflow: hidden;
+}
+
+#s-intro::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(161,0,107,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── Fade-out de toute la scène ── */
+#s-intro.outro {
+  animation: intro-out 0.55s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes intro-out {
+  to { opacity: 0; transform: scale(1.04); }
+}
+
+/* ── Conteneur du logo centré ── */
+.logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+}
+
+/* ── Logo principal ── */
+.logo-mark {
+  position: relative;
+  z-index: 2;
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #A1006B 0%, #7A0052 100%);
+  box-shadow:
+    0 0 0 1px rgba(244,160,204,0.18),
+    0 8px 32px rgba(161,0,107,0.55),
+    0 2px 8px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  opacity: 0;
+  transform: scale(0.82);
+  animation: logo-in 0.7s cubic-bezier(.23,1,.32,1) 0.6s forwards;
+}
+
+@keyframes logo-in {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Halo orbitant principal ── */
+.logo-halo {
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  opacity: 0;
+  /* Apparition 2.2s après le chargement */
+  animation:
+    halo-appear 0.9s cubic-bezier(.23,1,.32,1) 2.2s forwards,
+    halo-spin   9.5s linear 2.2s infinite;
+  will-change: transform, opacity;
+}
+
+/* Masque circulaire + glow conic */
+.logo-halo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 48%,
+    rgba(244,160,204,0.65) 62%,
+    rgba(161,0,107,0.90) 72%,
+    rgba(244,160,204,0.55) 80%,
+    transparent 92%,
+    transparent 100%
+  );
+  /* Contour lumineux */
+  box-shadow:
+    inset 0 0 0 1.5px rgba(244,160,204,0.20),
+    0 0 18px 4px rgba(161,0,107,0.28),
+    0 0 40px 8px rgba(161,0,107,0.12);
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 52%,
+    black 55%,
+    black 65%,
+    transparent 68%
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 52%,
+    black 55%,
+    black 65%,
+    transparent 68%
+  );
+}
+
+/* ── Second halo (::after) — plus fin, sens inverse ── */
+.logo-halo::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    transparent 0%,
+    transparent 55%,
+    rgba(244,160,204,0.35) 67%,
+    rgba(161,0,107,0.55) 74%,
+    rgba(244,160,204,0.28) 82%,
+    transparent 94%,
+    transparent 100%
+  );
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 56%,
+    black 59%,
+    black 67%,
+    transparent 70%
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 56%,
+    black 59%,
+    black 67%,
+    transparent 70%
+  );
+  animation: halo-spin-reverse 7.3s linear 2.2s infinite;
+  opacity: 0;
+  /* hérite de l'apparition du parent via la cascade */
+}
+
+/* Quand .logo-halo est visible, son ::after aussi */
+.logo-halo.visible::after {
+  opacity: 1;
+}
+
+@keyframes halo-appear {
+  0%   { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes halo-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes halo-spin-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* ── Texte sous le logo ── */
+.intro-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: intro-text-in 0.65s cubic-bezier(.23,1,.32,1) 1.1s forwards;
+}
+
+.intro-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(244,160,204,0.7);
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: intro-text-in 0.65s cubic-bezier(.23,1,.32,1) 1.4s forwards;
+}
+
+@keyframes intro-text-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Indicateur de chargement discret ── */
+.intro-loader {
+  width: 32px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(244,160,204,0.15);
+  overflow: hidden;
+  opacity: 0;
+  animation: intro-text-in 0.4s ease 1.8s forwards;
+}
+
+.intro-loader-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #A1006B, #F4A0CC);
+  animation: loader-sweep 1.4s cubic-bezier(.23,1,.32,1) 1.8s forwards;
+  transform: translateX(-100%);
+}
+
+@keyframes loader-sweep {
+  to { transform: translateX(0); }
+}
 </style>
 </head>
 <body>
@@ -2482,6 +2709,55 @@ function inp(type,ph){
 // ═══════════════════════════════════════════════════════════════════════════
 //  FLUX RETARD — ORDRE CORRECT
 // ═══════════════════════════════════════════════════════════════════════════
+
+function sIntro(){
+  var scene = document.createElement('div');
+  scene.id = 's-intro';
+
+  var wrap = document.createElement('div');
+  wrap.className = 'logo-wrap';
+
+  var halo = document.createElement('div');
+  halo.className = 'logo-halo';
+
+  var mark = document.createElement('div');
+  mark.className = 'logo-mark';
+  mark.textContent = 'TGV';
+
+  wrap.appendChild(halo);
+  wrap.appendChild(mark);
+  scene.appendChild(wrap);
+
+  var title = document.createElement('div');
+  title.className = 'intro-title';
+  title.textContent = 'TGVCare Assistant';
+  scene.appendChild(title);
+
+  var sub = document.createElement('div');
+  sub.className = 'intro-sub';
+  sub.textContent = 'BD30 / G30 — Conformité SNCF';
+  scene.appendChild(sub);
+
+  var loader = document.createElement('div');
+  loader.className = 'intro-loader';
+  var fill = document.createElement('div');
+  fill.className = 'intro-loader-fill';
+  loader.appendChild(fill);
+  scene.appendChild(loader);
+
+  /* Marque le halo visible (pour activer ::after) après l'apparition */
+  setTimeout(function(){ halo.classList.add('visible'); }, 2200);
+
+  /* Auto-dismiss vers sMenu après 3.6s */
+  setTimeout(function(){
+    scene.classList.add('outro');
+    setTimeout(function(){
+      if(scene.parentNode) scene.parentNode.removeChild(scene);
+    }, 580);
+  }, 3600);
+
+  return scene;
+}
 
 function sMenu(){
   return card("Que souhaitez-vous calculer ?","Choisissez le type de demande",renderOpts([
@@ -5016,6 +5292,14 @@ render();
 
   /* ── Boot: run hooks on the already-rendered initial state ──────────── */
   setTimeout(afterRender, 110);
+
+  /* ── Intro splash (premier chargement uniquement) ─────────────────── */
+  (function(){
+    var app = document.getElementById('app');
+    if(!app) return;
+    var intro = sIntro();
+    app.appendChild(intro);
+  })();
 
 })();
 </script>
