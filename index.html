@@ -3727,8 +3727,8 @@ function sExceptionalIndemnity(){
       wrapMax.appendChild(inputRowMax);
 
       var scMax=div("");
-      scMax.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;";
-      [20,25,30,40,60].forEach(function(v){
+      scMax.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;";
+      [30,40,50].forEach(function(v){
         var btn=document.createElement("button");
         btn.textContent=v+"€";
         btn.style.cssText="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--tx);font-size:13px;cursor:pointer;";
@@ -3736,6 +3736,17 @@ function sExceptionalIndemnity(){
         scMax.appendChild(btn);
       });
       wrapMax.appendChild(scMax);
+
+      // Note mode de paiement selon contexte
+      var isBD=S.segments&&S.segments.length>1;
+      var modeNote=div("");
+      modeNote.style.cssText="font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:14px;background:var(--surface2);border-left:3px solid var(--prune);color:var(--tx-muted);";
+      if(isBD){
+        modeNote.innerHTML="<strong>Billet Direct</strong> — BAD si retard < 60 min &middot; BAD ou Virement Bancaire si ≥ 60 min (RIB requis)";
+      }else{
+        modeNote.innerHTML="<strong>G30 hors Billet Direct</strong> — Indemnisation <strong>uniquement en BAD</strong> (Normes Voyage Back p. 14)";
+      }
+      wrapMax.appendChild(modeNote);
 
       var btnMax=document.createElement("button");
       btnMax.textContent="Valider →";
