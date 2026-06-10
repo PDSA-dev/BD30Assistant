@@ -1608,9 +1608,9 @@ body::after {
   transition: opacity 0.4s ease;
 }
 
-/* 2. Proper enter animation — ease-out-expo + blur rise */
+/* 2. Proper enter animation — slide directionnel (avance: depuis la droite) */
 @keyframes pm-enter {
-  from { opacity: 0; transform: translateY(12px) scale(0.986); filter: blur(3px); }
+  from { opacity: 0; transform: translateX(32px) scale(0.986); filter: blur(3px); }
   to   { opacity: 1; transform: none; filter: none; }
 }
 
@@ -1929,11 +1929,327 @@ html { scroll-behavior: smooth; }
 @keyframes loader-sweep {
   to { transform: translateX(0); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* ✦ UPGRADE LAYER — transitions directionnelles, skeleton, ripple, toast…     */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 6.2 — Transition directionnelle entre étapes */
+@keyframes pm-enter-back {
+  from { opacity: 0; transform: translateX(-32px) scale(0.986); filter: blur(3px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+#app.nav-back .step-card,
+#app.nav-back .result-card,
+#app.nav-back .result-header,
+#app.nav-back .result-amount { animation-name: pm-enter-back; }
+
+.step-exit {
+  opacity: 0 !important;
+  transform: translateX(-20px) !important;
+  transition: opacity 200ms ease, transform 200ms ease !important;
+  pointer-events: none;
+}
+.step-exit.step-exit-back { transform: translateX(20px) !important; }
+
+/* 6.3 — Shimmer skeleton */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 12px;
+}
+
+/* 6.4 — Glow contextuel selon le montant */
+.result-card.result-glow-green {
+  border-color: rgba(130, 190, 0, 0.35);
+  box-shadow: 0 0 56px rgba(130, 190, 0, 0.18), var(--shadow-lg);
+}
+.result-card.result-glow-amber {
+  border-color: rgba(224, 82, 6, 0.30);
+  box-shadow: 0 0 56px rgba(224, 82, 6, 0.15), var(--shadow-lg);
+}
+
+/* 6.5 — Ripple matériel sur .opt */
+.opt { overflow: hidden; }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--prune-glow);
+  transform: scale(0);
+  animation: ripple-anim 500ms linear;
+  pointer-events: none;
+}
+@keyframes ripple-anim {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* 6.6 — Barre de progression : spring, glow pulsant, badge % flottant */
+.progress-track {
+  overflow: visible;
+  position: relative;
+  margin-top: 26px;
+}
+.progress-fill {
+  border-radius: 99px;
+  transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 12px var(--prune-glow);
+  animation: progress-pulse 2.2s ease-in-out infinite;
+}
+@keyframes progress-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--prune-glow); }
+  50%      { box-shadow: 0 0 16px var(--prune-glow); }
+}
+.progress-badge {
+  position: absolute;
+  top: -22px;
+  transform: translateX(-50%);
+  background: var(--prune);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  box-shadow: 0 2px 10px var(--prune-glow);
+  transition: left 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 6.7 — Toast global */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--tx); color: var(--bg);
+  padding: 12px 24px; border-radius: 99px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 9999; pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 6.8 — Transition douce lors du toggle dark mode */
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 300ms ease, border-color 300ms ease, color 200ms ease, box-shadow 300ms ease !important;
+}
+
+/* 6.9 — Gradient text sur les montants totaux */
+.amount-highlight {
+  background: linear-gradient(135deg, var(--prune) 0%, #E0529C 50%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 6.10 — Badge points fidélité SNCF */
+@keyframes bounceIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  55%  { transform: scale(1.08); }
+  75%  { transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes star-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.2); }
+}
+.points-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tx);
+  background: rgba(255, 200, 0, 0.10);
+  border: 1.5px solid gold;
+  box-shadow: 0 0 12px rgba(255, 200, 0, 0.4);
+  animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.points-badge .pb-star {
+  display: inline-block;
+  animation: star-pulse 1.1s ease-in-out 2;
+}
+
+/* Feedback visuel renforcé sur la copie presse-papiers */
+@keyframes copy-flash {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+.act-btn.copied {
+  animation: copy-flash 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(150deg, var(--green), #6B9F00) !important;
+  color: #fff !important;
+}
+
+/* Sélecteur de date Jour / Mois / Année (remplace le calendrier natif,
+   dont la sélection mois/année n'est pas disponible sur tous les navigateurs) */
+.date-select-row {
+  display: flex;
+  gap: 8px;
+}
+.date-select-row .date-select {
+  flex: 1;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 600;
+}
+.date-select-row .date-select:nth-child(2) {
+  flex: 1.7;
+  text-align: left;
+}
+
+/* Libellé collé à son champ dans les formulaires (le gap du flex suffit) */
+.input-row .step-sub { margin-bottom: 0; }
+
+/* ── Form groups : label solidaire de son champ (flux normal, pas de chevauchement) ── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: static;
+  margin-bottom: 14px;
+}
+.form-label {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #595959;
+  line-height: 1.4;
+  margin: 0;
+}
+[data-theme="dark"] .form-label { color: var(--tx-muted); }
+
+/* WCAG — contraste renforcé des textes informatifs en mode clair */
+[data-theme="light"] .step-sub { color: #595959; }
+
+/* ── État sélectionné explicite des options (abonnements…) ── */
+.opt.opt-selected {
+  border-color: var(--prune) !important;
+  background: var(--prune-lt) !important;
+  box-shadow: 0 0 0 1px var(--prune), 0 4px 20px var(--prune-glow) !important;
+}
+[data-theme="dark"] .opt.opt-selected { background: rgba(212, 104, 142, 0.12) !important; }
+.opt-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--prune);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--prune-glow);
+  animation: bounceIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.opt-check svg { width: 13px; height: 13px; stroke-width: 3; }
+
+/* ── Tooltips d'aide métier — icône (i) ── */
+.tip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--prune);
+  color: var(--prune);
+  font-size: 10px; font-weight: 700; font-style: normal;
+  line-height: 1;
+  margin-left: 6px;
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+  user-select: none;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.tip:hover, .tip:focus-visible {
+  background: var(--prune);
+  color: #fff;
+  transform: scale(1.12);
+  outline: none;
+}
+
+/* ── Boîte tooltip — glassmorphism (élément global fixe : jamais rognée par overflow) ── */
+#tip-box {
+  position: fixed;
+  z-index: 100;
+  max-width: 260px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(122, 0, 77, 0.15);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+  color: var(--tx);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.55;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+#tip-box.show { opacity: 1; transform: translateY(0); }
+[data-theme="dark"] #tip-box {
+  background: rgba(33, 33, 42, 0.92);
+  border-color: rgba(212, 104, 142, 0.25);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Micro-interactions supplémentaires sur le bouton Calculer / Valider */
+.btn-confirm:hover { filter: brightness(1.06); }
+.btn-confirm:active { filter: brightness(0.94); }
+
+/* ── Scroll automatique vers le résultat ──
+   Marge de défilement : hauteur du header sticky (~80px) + 24px de respiration,
+   pour que la carte ne se colle pas au bord supérieur et conserve ses ombres portées */
+.result-card { scroll-margin-top: 104px; }
+
+/* ── Badges de statut dans l'historique des dossiers ── */
+.hist-badge {
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.hist-badge.resiliation {
+  background: rgba(224, 82, 6, 0.16);
+  color: #7C3A00;
+  border: 1px solid rgba(224, 82, 6, 0.35);
+}
+[data-theme="dark"] .hist-badge.resiliation {
+  background: rgba(224, 82, 6, 0.20);
+  color: #FFB380;
+}
+.hist-badge.retraction {
+  background: rgba(100, 116, 160, 0.14);
+  color: #3D4A6B;
+  border: 1px solid rgba(100, 116, 160, 0.35);
+}
+[data-theme="dark"] .hist-badge.retraction {
+  background: rgba(100, 116, 160, 0.22);
+  color: #B8C4E8;
+}
+
+/* Reduced motion — neutraliser les nouvelles animations */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .ripple, .points-badge, .points-badge .pb-star, .progress-fill { animation: none !important; }
+  .step-exit, .progress-fill, .progress-badge, .toast { transition: none !important; }
+}
 </style>
 </head>
 <body>
 
 <div id="app"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
 'use strict';
@@ -1980,13 +2296,40 @@ var TARIFS_TER=[
 ];
 
 function getTarifsForCarrier(cid,nbPass){
+  // Robustesse : forcer nbPass en entier (NaN => traité comme non fourni)
+  var n=parseInt(nbPass,10);
+  if(isNaN(n))n=undefined;
   if(cid==="ouigo")return TARIFS_OUIGO;
   if(cid==="ter"||cid==="ter_zou"||cid==="ter_krono"){
-    if(nbPass!==undefined&&nbPass<3)return TARIFS_TER.filter(function(t){return t.id!=="groupe";});
+    if(n!==undefined&&n<3)return TARIFS_TER.filter(function(t){return t.id!=="groupe";});
     return TARIFS_TER;
   }
   return TARIFS;
 }
+
+// Entrée accordéon "Billet Prime" — partagée par les 3 écrans tarif (confirmFn(id,label) varie)
+function buildPrimeAccordionItem(confirmFn){
+  return{
+    icon:"<i data-lucide='star'></i>",
+    label:"Billet Prime",
+    desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
+    children:[
+      {_sep:"Titulaire — le voyageur est le titulaire"},
+      {icon:"<i data-lucide='contact'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmFn("prime_titulaire","Prime — Titulaire (FID)");}},
+      {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmFn("prime_gvt_transitoire","Prime — GVT Transitoire");}},
+      {_sep:"Tiers — billet acheté pour un autre voyageur"},
+      {icon:"<i data-lucide='contact'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmFn("prime_fid_tiers","Prime — FID + Tiers");}},
+      {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmFn("prime_gvt_tiers","Prime — GVT + Tiers");}},
+      {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmFn("prime_tiers_seul","Prime — Tiers seul");}}
+    ]
+  };
+}
+
+// Procédure déposant Prime — texte partagé par sPrimeDeposant et sPrimeDeposantUnique
+var PRIME_PROC_HTML="<div class='info-icon'><i data-lucide='clipboard-list'></i></div><div><strong>Procédure selon le déposant :</strong><br>"
+  +"<span style='display:block;margin-top:6px;'>👤 <strong>Titulaire FID dépose</strong> — Traitement en file FID AV Voyage · Note interne : <em>« billet prime pour tiers »</em></span>"
+  +"<span style='display:block;margin-top:4px;'>🔄 <strong>Tiers dépose seul</strong> — Transférer en file <strong>Fid AV Voyage Senior Oscar / GVLC</strong> · Note interne : <em>« billet prime pour tiers »</em></span>"
+  +"</div>";
 
 var RS={
   tgv_dom:       [[30,59,25],[60,119,25],[120,179,50],[180,239,75],[240,Infinity,75]],
@@ -2168,37 +2511,222 @@ function cleanPaste(text) {
   return text.trim();
 }
 
-// 🔧 UTILITAIRE: Attacher cleanPaste au paste event
+// 🔧 UTILITAIRE: Attacher cleanPaste au paste event (une seule fois par input)
 function attachCleanPaste(inputElement) {
-  if (!inputElement) return;
+  if (!inputElement || inputElement._cleanPaste) return;
+  inputElement._cleanPaste = true;
   inputElement.addEventListener("paste", function(e) {
     e.preventDefault();
     var pasted = (e.clipboardData || window.clipboardData).getData("text");
-    var cleaned = cleanPaste(pasted);
-    inputElement.value = cleaned;
-    // Trigger change event for reactivity
-    inputElement.dispatchEvent(new Event("change"));
+    inputElement.value = cleanPaste(pasted);
+    // Déclencher input ET change pour la réactivité (certains champs écoutent "input")
+    inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+    inputElement.dispatchEvent(new Event("change", { bubbles: true }));
   });
 }
 
-// Hook: Connecter cleanPaste à tous les inputs
+// Hook: Connecter cleanPaste à tous les inputs (idempotent grâce au flag _cleanPaste)
 function setupCleanPasteHooks() {
-  var inputs = document.querySelectorAll("input[type='text'], input[type='number'], textarea");
-  inputs.forEach(function(inp) {
-    inp.addEventListener("paste", function(e) {
+  document.querySelectorAll("input[type='text'], input[type='number'], textarea").forEach(attachCleanPaste);
+}
+
+// 🔔 Toast global — copie, sauvegarde, suppression de dossier
+var _toastTimer = null;
+function showToast(message, duration) {
+  var t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = message;
+  t.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function() { t.classList.remove("show"); }, duration || 2000);
+}
+
+// 📋 Copie presse-papiers centralisée (feedback bouton + toast)
+function copyToClipboard(text, btnEl) {
+  function feedback() {
+    showToast("Copié dans le presse-papiers");
+    if (btnEl) {
+      var prev = btnEl.innerHTML;
+      btnEl.classList.add("copied");
+      btnEl.innerHTML = "<i data-lucide='check'></i> Copié!";
+      if (window.lucide) try { lucide.createIcons(); } catch(e) {}
+      setTimeout(function() {
+        btnEl.classList.remove("copied");
+        btnEl.innerHTML = prev;
+        if (window.lucide) try { lucide.createIcons(); } catch(e) {}
+      }, 1500);
+    }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(feedback).catch(function() { prompt("Copie manuelle :", text); });
+  } else {
+    prompt("Copie manuelle :", text);
+  }
+}
+
+// 🔢 Compteur animé sur les montants (requestAnimationFrame — non bloquant)
+function animateCountUp(el, targetValue, duration) {
+  duration = duration || 800;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var raw = el.textContent.trim();
+  var m = raw.match(/^([\d\s,.]+)/);
+  var suffix = m ? raw.slice(m[0].length) : "";
+  var dec = raw.indexOf(".") >= 0 || String(targetValue).indexOf(".") >= 0 ? 2 : 0;
+  el.dataset.pmCount = "1";
+  var t0 = null;
+  function frame(ts) {
+    if (!t0) t0 = ts;
+    var p = Math.min((ts - t0) / duration, 1);
+    var eased = 1 - Math.pow(1 - p, 3); // ease-out
+    el.textContent = (targetValue * eased).toFixed(dec) + suffix;
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// 💧 Ripple matériel sur les boutons .opt (attaché après chaque render)
+function setupRipples() {
+  document.querySelectorAll(".opt").forEach(function(btn) {
+    if (btn._ripple) return;
+    btn._ripple = true;
+    function spawn(e) {
+      var rect = btn.getBoundingClientRect();
+      var cx = e.touches && e.touches.length ? e.touches[0].clientX : e.clientX;
+      var cy = e.touches && e.touches.length ? e.touches[0].clientY : e.clientY;
+      var size = Math.max(rect.width, rect.height);
+      var r = document.createElement("span");
+      r.className = "ripple";
+      r.style.width = r.style.height = size + "px";
+      r.style.left = (cx - rect.left - size / 2) + "px";
+      r.style.top = (cy - rect.top - size / 2) + "px";
+      btn.appendChild(r);
+      setTimeout(function() { if (r.parentNode) r.parentNode.removeChild(r); }, 500);
+    }
+    btn.addEventListener("mousedown", spawn);
+    btn.addEventListener("touchstart", spawn, { passive: true });
+  });
+}
+
+// 📅 Sélecteur de date Jour / Mois / Année — fiable sur tous les navigateurs
+// (le calendrier natif d'input[type=date] ne permet pas toujours de choisir mois/année).
+// La valeur ISO (YYYY-MM-DD) est exposée via element.dataset.value et via onChange(iso).
+var DATE_MONTHS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+function makeDateSelect(id,isoValue,onChange){
+  var parts=(isoValue||"").split("-");
+  var now=new Date();
+  var y=parseInt(parts[0],10)||now.getFullYear();
+  var m=(parseInt(parts[1],10)||now.getMonth()+1)-1;
+  var d=parseInt(parts[2],10)||now.getDate();
+
+  var row=div("date-select-row");
+  row.id=id;
+
+  function mkSel(aria){
+    var s=document.createElement("select");
+    s.className="inp date-select";
+    s.setAttribute("aria-label",aria);
+    return s;
+  }
+  var selD=mkSel("Jour"),selM=mkSel("Mois"),selY=mkSel("Année");
+
+  var yMin=now.getFullYear()-8,yMax=now.getFullYear()+1;
+  for(var yy=yMax;yy>=yMin;yy--){
+    var oy=document.createElement("option");oy.value=yy;oy.textContent=yy;selY.appendChild(oy);
+  }
+  DATE_MONTHS.forEach(function(lbl,i){
+    var om=document.createElement("option");om.value=i+1;om.textContent=lbl;selM.appendChild(om);
+  });
+
+  function daysIn(yy,mm){return new Date(yy,mm,0).getDate();}
+  function fillDays(){
+    var max=daysIn(parseInt(selY.value,10),parseInt(selM.value,10));
+    var cur=parseInt(selD.value,10)||d;
+    selD.innerHTML="";
+    for(var dd=1;dd<=max;dd++){
+      var od=document.createElement("option");od.value=dd;od.textContent=("0"+dd).slice(-2);selD.appendChild(od);
+    }
+    selD.value=Math.min(cur,max);
+  }
+  function emit(){
+    var iso=selY.value+"-"+("0"+selM.value).slice(-2)+"-"+("0"+selD.value).slice(-2);
+    row.dataset.value=iso;
+    if(onChange)onChange(iso);
+  }
+
+  selY.value=Math.min(Math.max(y,yMin),yMax);
+  selM.value=m+1;
+  fillDays();
+  selD.value=Math.min(d,parseInt(selD.options[selD.options.length-1].value,10));
+  emit(); // initialise dataset.value et l'état avec la valeur par défaut
+
+  selD.addEventListener("change",emit);
+  selM.addEventListener("change",function(){fillDays();emit();});
+  selY.addEventListener("change",function(){fillDays();emit();});
+
+  row.appendChild(selD);row.appendChild(selM);row.appendChild(selY);
+  return row;
+}
+
+// 💡 Tooltips d'aide métier — boîte globale fixe positionnée au-dessus de l'icône (i).
+// Élément unique en position:fixed : jamais rogné par l'overflow:hidden des boutons .opt.
+function setupTips() {
+  var box = document.getElementById("tip-box");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "tip-box";
+    box.setAttribute("role", "tooltip");
+    document.body.appendChild(box);
+  }
+  // Masquer tout tooltip résiduel à chaque render (l'icône survolée peut avoir disparu)
+  box._showing = false;
+  box.classList.remove("show");
+  function show(el) {
+    var txt = el.getAttribute("data-tip");
+    if (!txt) return;
+    box.textContent = txt;
+    // mesurer puis positionner au-dessus de l'icône (en dessous si pas la place)
+    var r = el.getBoundingClientRect();
+    var bw = box.offsetWidth, bh = box.offsetHeight;
+    var left = Math.min(Math.max(8, r.left + r.width / 2 - bw / 2), window.innerWidth - bw - 8);
+    var top = r.top - bh - 8;
+    if (top < 8) top = r.bottom + 8;
+    box.style.left = left + "px";
+    box.style.top = top + "px";
+    box._showing = true;
+    requestAnimationFrame(function() { if (box._showing) box.classList.add("show"); });
+  }
+  function hide() { box._showing = false; box.classList.remove("show"); }
+  // Tout élément porteur de data-tip (icônes .tip, badges de statut…)
+  document.querySelectorAll("[data-tip]").forEach(function(el) {
+    if (el._tip) return;
+    el._tip = true;
+    el.tabIndex = 0;
+    el.addEventListener("mouseenter", function() { show(el); });
+    el.addEventListener("mouseleave", hide);
+    el.addEventListener("focus", function() { show(el); });
+    el.addEventListener("blur", hide);
+    // Tap mobile : afficher/masquer sans déclencher l'option parente
+    el.addEventListener("click", function(e) {
+      e.stopPropagation();
       e.preventDefault();
-      var cleaned = cleanPaste(e.clipboardData.getData("text"));
-      inp.value = cleaned;
-      inp.dispatchEvent(new Event("change", { bubbles: true }));
+      if (box.classList.contains("show")) hide(); else show(el);
     });
   });
 }
 
-// Appeler après chaque render
+// Direction de navigation — pilote les transitions directionnelles (avance / retour)
+window._navDir = "fwd";
+
+// Appeler après chaque render (synchrone : le DOM vient d'être injecté)
 var originalRender = render;
 render = function() {
+  var appEl = document.getElementById("app");
+  if (appEl) appEl.classList.toggle("nav-back", window._navDir === "back");
   originalRender();
-  setTimeout(setupCleanPasteHooks, 50);
+  setupCleanPasteHooks();
+  setupRipples();
+  setupTips();
+  window._navDir = "fwd";
 };
 
 var S={
@@ -2215,9 +2743,17 @@ var S={
   retractionData:{},
 };
 
+var _renderQueued=false;
 function set(patch){
   for(var k in patch)S[k]=patch[k];
-  render();
+  // Debounce léger : plusieurs set() rapprochés => un seul render
+  // (supprime aussi les renders réentrants quand une fonction d'étape appelle set() pendant le rendu)
+  if(_renderQueued)return;
+  _renderQueued=true;
+  requestAnimationFrame(function(){
+    _renderQueued=false;
+    render();
+  });
 }
 
 function pushH(icon,q,a){
@@ -2247,6 +2783,8 @@ function goBack(){
 }
 
 function editHistAt(idx){
+  // Navigation arrière : transition directionnelle inverse
+  window._navDir="back";
   // Enlever l'élément qu'on édite pour le remplacer (pas le dupliquer)
   S.history=S.history.slice(0,idx);
 
@@ -2281,9 +2819,9 @@ function editHistAt(idx){
       var priceVal=parseFloat(h.a); // "50.00 €" or "0.00 € (tarif spécial)"
       newBuildingSegPassengers[pidx].price=isNaN(priceVal)?0:priceVal;
     }
-    // Reconstruire les frais depuis la history
+    // Reconstruire les frais depuis la history (indexOf : gère le suffixe " [DIGIPEC]")
     for(var ft=0;ft<FRAIS_TYPES.length;ft++){
-      if(h.q===FRAIS_TYPES[ft].label){
+      if(h.q.indexOf(FRAIS_TYPES[ft].label)===0){
         // Extraire le montant depuis le displayStr (ex: "25.00€ (total)" ou "15.00€ × 2 = 30.00€")
         var fraisVal=parseFloat(h.a);
         if(!isNaN(fraisVal)){
@@ -2295,11 +2833,30 @@ function editHistAt(idx){
   }
 
   // Nettoyer les segments : garder seulement les segments AVANT le dernier "Transporteur"
-  // Cela évite de dupliquer les segments en cours de modification
+  // Cela évite de dupliquer les segments en cours de modification.
+  // Un transporteur multi-passagers crée PLUSIEURS segments partageant le même groupId :
+  // on compte donc les groupes, pas les segments.
   var newSegments=S.segments.slice();
   if(transporteurCount>0){
-    // On garde (transporteurCount-1) segments, on supprime le reste
-    newSegments=newSegments.slice(0,Math.max(0,transporteurCount-1));
+    var keepGroups=Math.max(0,transporteurCount-1);
+    var seenGroups=[];
+    var keptSegs=[];
+    for(var si=0;si<newSegments.length;si++){
+      var gid=newSegments[si].groupId||newSegments[si].id;
+      if(seenGroups.indexOf(gid)<0){
+        if(seenGroups.length>=keepGroups)break;
+        seenGroups.push(gid);
+      }
+      keptSegs.push(newSegments[si]);
+    }
+    newSegments=keptSegs;
+  }
+
+  // Invalider l'indemnisation exceptionnelle si ses segments ne sont plus présents
+  if(S.exceptionalIndemnity){
+    var _exIdsEd=S.exceptionalIndemnity.segmentIds||[S.exceptionalIndemnity.segmentId];
+    var _exAllPresent=_exIdsEd.every(function(id){return newSegments.some(function(sg){return sg.id===id;});});
+    if(!_exAllPresent)S.exceptionalIndemnity=null;
   }
 
   // Déterminer le step correct
@@ -2314,12 +2871,10 @@ function editHistAt(idx){
     }
   }
 
-  // Vérifier si on édite un frais
-  var isFraisEdit=false;
+  // Vérifier si on édite un frais (indexOf : gère le suffixe " [DIGIPEC]")
   for(var ft=0;ft<FRAIS_TYPES.length;ft++){
-    if(lastQ===FRAIS_TYPES[ft].label){
-      isFraisEdit=true;
-      set({step:"frais_montant",buildingSeg:{fraisType:FRAIS_TYPES[ft].id,fraisMax:FRAIS_TYPES[ft].max},fraisList:newFraisList});
+    if(lastQ.indexOf(FRAIS_TYPES[ft].label)===0){
+      set({step:"frais_montant",nbPass:restoredNbPass,buildingSeg:{fraisType:FRAIS_TYPES[ft].id,fraisMax:FRAIS_TYPES[ft].max},fraisList:newFraisList});
       return;
     }
   }
@@ -2341,14 +2896,25 @@ function editHistAt(idx){
     }else{
       set({step:"add_segment",nbPass:restoredNbPass,buildingSegPassengers:newBuildingSegPassengers,buildingSeg:newBuildingSeg,segments:newSegments,fraisList:newFraisList});
     }
+  }else if(lastQ==="Frais"){
+    set({step:"frais_type",nbPass:restoredNbPass,fraisList:newFraisList});
+  }else if(lastQ==="Tarif"){
+    // Question "tarif identique ?" (flux multi-passagers)
+    set({step:"tarif_identique",nbPass:restoredNbPass,selectedTarifUnique:null,buildingSegPassengers:[],buildingSeg:newBuildingSeg,segments:newSegments,fraisList:newFraisList});
+  }else if(lastQ.indexOf("Tarif (x")===0){
+    // Tarif unique pour N passagers
+    set({step:"tarif_unique",nbPass:restoredNbPass,selectedTarifUnique:null,buildingSegPassengers:[],buildingSeg:newBuildingSeg,segments:newSegments,fraisList:newFraisList});
   }else{
-    set({nbPass:restoredNbPass,buildingSegPassengers:newBuildingSegPassengers,buildingSeg:newBuildingSeg,segments:newSegments,fraisList:newFraisList});
-    render();
+    var fallbackPatch={nbPass:restoredNbPass,buildingSegPassengers:newBuildingSegPassengers,buildingSeg:newBuildingSeg,segments:newSegments,fraisList:newFraisList};
+    // Flux dates : le retour depuis un résultat ramène au formulaire correspondant
+    if(S.step==="result_retraction")fallbackPatch.step="retraction";
+    else if(S.step==="result_resiliation")fallbackPatch.step="resiliation";
+    set(fallbackPatch);
   }
 }
 
 function reset(){
-  set({step:"menu",flow:null,history:[],delay:0,nbPass:0,segments:[],buildingSeg:{},currentPassenger:0,buildingSegPassengers:[],fraisList:[],uniformTariff:false,selectedTarifUnique:null,ouigoDelay:0,exceptionalIndemnity:null,selectedTGVForException:null,exceptionalPrimeEuros:null,exceptionalMaxAmt:null});
+  set({step:"menu",flow:null,history:[],delay:0,nbPass:0,segments:[],buildingSeg:{},currentPassenger:0,buildingSegPassengers:[],fraisList:[],uniformTariff:false,selectedTarifUnique:null,ouigoDelay:0,exceptionalIndemnity:null,selectedTGVForException:null,exceptionalPrimeEuros:null,exceptionalMaxAmt:null,retardDossierId:null,specialDossierId:null,resiliationData:{},retractionData:{}});
 }
 
 function mkDosDate(){
@@ -2363,9 +2929,26 @@ function saveDossier(summary){
     localStorage.setItem("bd30-dossiers",JSON.stringify(d));
   }catch(e){}
 }
-function saveRetardDossier(data){
+function saveRetardDossier(data,existingId){
   try{
     var d=JSON.parse(localStorage.getItem("bd30-dossiers")||"[]");
+    // Si le dossier en cours existe déjà (recalcul après retour arrière), le mettre à jour au lieu d'en créer un doublon
+    if(existingId){
+      for(var i=0;i<d.length;i++){
+        if(d[i].id===existingId){
+          d[i].date=mkDosDate();
+          d[i].ml=data.ml;
+          d[i].delay=data.delay;
+          d[i].retardTotal=data.retardTotal;
+          d[i].segs=data.segs||[];
+          d[i].summary=data.summary;
+          d[i].total=(data.retardTotal||0)+(d[i].fraisTotal||0);
+          localStorage.setItem("bd30-dossiers",JSON.stringify(d));
+          return existingId;
+        }
+      }
+      // dossier supprimé entre-temps : on retombe sur la création
+    }
     var entry={id:Date.now(),date:mkDosDate(),ml:data.ml,delay:data.delay,retardTotal:data.retardTotal,total:data.total,segs:data.segs||[],frais:data.frais||[],fraisTotal:data.fraisTotal||0,summary:data.summary};
     d.unshift(entry);
     if(d.length>50)d=d.slice(0,50);
@@ -2373,6 +2956,31 @@ function saveRetardDossier(data){
     return entry.id;
   }catch(e){return null;}
 }
+// Dossiers Résiliation / Rétractation — entrée typée dans l'historique.
+// existingId : recalcul du même dossier (retour arrière) => mise à jour, pas de doublon.
+function saveSpecialDossier(type,summary,extra,existingId){
+  try{
+    var d=JSON.parse(localStorage.getItem("bd30-dossiers")||"[]");
+    if(existingId){
+      for(var i=0;i<d.length;i++){
+        if(d[i].id===existingId){
+          d[i].date=mkDosDate();
+          d[i].summary=summary;
+          if(extra)for(var k in extra)d[i][k]=extra[k];
+          localStorage.setItem("bd30-dossiers",JSON.stringify(d));
+          return existingId;
+        }
+      }
+    }
+    var entry={id:Date.now(),date:mkDosDate(),type:type,summary:summary};
+    if(extra)for(var k2 in extra)entry[k2]=extra[k2];
+    d.unshift(entry);
+    if(d.length>50)d=d.slice(0,50);
+    localStorage.setItem("bd30-dossiers",JSON.stringify(d));
+    return entry.id;
+  }catch(e){return null;}
+}
+
 function updateDossierFrais(dossierId,fraisArr,fraisTotal){
   if(!dossierId)return;
   try{
@@ -2393,6 +3001,7 @@ function deleteDossierById(id){
     var d=JSON.parse(localStorage.getItem("bd30-dossiers")||"[]");
     d=d.filter(function(x){return x.id!==id;});
     localStorage.setItem("bd30-dossiers",JSON.stringify(d));
+    showToast("Dossier supprimé");
     render();
   }catch(e){}
 }
@@ -2412,6 +3021,57 @@ function sDossierHistory(){
     var bd=div("result-breakdown");
     bd.appendChild(div("breakdown-title","<i data-lucide='clock'></i>Dossiers récents"));
     dossiers.forEach(function(dos){
+      // Dossiers Résiliation / Rétractation — carte dédiée avec badge de statut
+      if(dos.type==="retraction"||dos.type==="resiliation"){
+        var isRetr=dos.type==="retraction";
+        var spAccent=isRetr?"#64748B":"var(--amber)";
+        var spCard=document.createElement("div");
+        spCard.style.cssText="border:1px solid var(--border);border-left:3px solid "+spAccent+";border-radius:8px;padding:12px;background:var(--surface);margin-bottom:10px;";
+        var spRow=document.createElement("div");
+        spRow.style.cssText="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;";
+        var spBadge=document.createElement("span");
+        spBadge.className="hist-badge "+(isRetr?"retraction":"resiliation");
+        spBadge.textContent=isRetr?"RÉTRACTATION":"RÉSILIATION";
+        if(isRetr){
+          // Règle métier rappelée au survol du statut
+          spBadge.setAttribute("data-tip","Date d'achat de la carte ou de l'abonnement (signature du contrat)");
+          spBadge.style.cursor="help";
+        }
+        spRow.appendChild(spBadge);
+        var spDate=document.createElement("span");
+        spDate.style.cssText="font-size:11px;color:var(--tx-muted);";
+        spDate.textContent=dos.date;
+        spRow.appendChild(spDate);
+        var spSpacer=document.createElement("div");spSpacer.style.flex="1";
+        spRow.appendChild(spSpacer);
+        var spRight=document.createElement("span");
+        spRight.style.cssText="font-size:12px;font-weight:700;color:"+spAccent+";white-space:nowrap;";
+        if(isRetr)spRight.textContent=dos.depasse?"Délai dépassé":"Limite "+(dos.deadline||"—");
+        else spRight.textContent=dos.frais||"—";
+        spRow.appendChild(spRight);
+        var spDel=document.createElement("button");
+        spDel.style.cssText="background:none;border:none;cursor:pointer;color:var(--tx-muted);padding:2px 4px;font-size:14px;line-height:1;";
+        spDel.setAttribute("aria-label","Supprimer le dossier");
+        spDel.innerHTML="<i data-lucide='x'></i>";
+        (function(id){spDel.onclick=function(){if(window.confirm("Supprimer ce dossier ?"))deleteDossierById(id);};})(dos.id);
+        spRow.appendChild(spDel);
+        spCard.appendChild(spRow);
+        var spSum=document.createElement("div");
+        spSum.style.cssText="font-size:11px;color:var(--tx);line-height:1.55;word-break:break-word;";
+        spSum.textContent=dos.summary||"";
+        spCard.appendChild(spSum);
+        var spCopyRow=document.createElement("div");
+        spCopyRow.style.cssText="display:flex;justify-content:flex-end;margin-top:10px;";
+        var spCp=document.createElement("button");
+        spCp.className="act-btn success";
+        spCp.style.cssText="padding:6px 12px;font-size:11px;";
+        spCp.innerHTML="<i data-lucide='copy'></i> Copier";
+        (function(d,btn){btn.onclick=function(){copyToClipboard(d.summary||"",btn);};})(dos,spCp);
+        spCopyRow.appendChild(spCp);
+        spCard.appendChild(spCopyRow);
+        bd.appendChild(spCard);
+        return;
+      }
       // Rich entry (has segs field) vs legacy string entry
       if(dos.segs!==undefined){
         var card=document.createElement("div");
@@ -2446,6 +3106,7 @@ function sDossierHistory(){
         hRow.appendChild(totalSpan);
         var delBtn=document.createElement("button");
         delBtn.style.cssText="background:none;border:none;cursor:pointer;color:var(--tx-muted);padding:2px 4px;font-size:14px;line-height:1;";
+        delBtn.setAttribute("aria-label","Supprimer le dossier");
         delBtn.innerHTML="<i data-lucide='x'></i>";
         (function(id){delBtn.onclick=function(){if(window.confirm("Supprimer ce dossier ?"))deleteDossierById(id);};})(dos.id);
         hRow.appendChild(delBtn);
@@ -2526,8 +3187,7 @@ function sDossierHistory(){
             if(d.frais&&d.frais.length){
               txt+=" | Frais: "+d.frais.map(function(f){return f.label+" "+f.amt.toFixed(2)+"€";}).join(" + ");
             }
-            if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){btn.innerHTML="<i data-lucide='check'></i> Copié!";if(window.lucide)lucide.createIcons();setTimeout(function(){btn.innerHTML="<i data-lucide='copy'></i> Copier";if(window.lucide)lucide.createIcons();},1500);}).catch(function(){prompt("",txt);});
-            else prompt("",txt);
+            copyToClipboard(txt,btn);
           };
         })(dos,btnCp);
         copyRow.appendChild(btnCp);
@@ -2540,10 +3200,10 @@ function sDossierHistory(){
         btnCp.className="act-btn success";
         btnCp.style.cssText="padding:6px 10px;font-size:11px;flex-shrink:0;";
         btnCp.innerHTML="<i data-lucide='copy'></i>";
+        btnCp.setAttribute("aria-label","Copier le dossier");
         (function(d,btn){
           btn.onclick=function(){
-            if(navigator.clipboard)navigator.clipboard.writeText(d.summary).then(function(){btn.innerHTML="<i data-lucide='check'></i>";if(window.lucide)lucide.createIcons();setTimeout(function(){btn.innerHTML="<i data-lucide='copy'></i>";if(window.lucide)lucide.createIcons();},1500);}).catch(function(){prompt("",d.summary);});
-            else prompt("",d.summary);
+            copyToClipboard(d.summary,btn);
           };
         })(dos,btnCp);
         item.innerHTML="<div style='flex:1;min-width:0;'><div style='font-size:10px;color:var(--tx-muted);'>"+dos.date+"</div><div style='font-size:12px;color:var(--tx);margin-top:3px;word-break:break-word;'>"+dos.summary+"</div></div>";
@@ -2556,7 +3216,7 @@ function sDossierHistory(){
   var acts=div("action-row");
   if(dossiers.length){
     var btnClear=document.createElement("button");btnClear.className="act-btn danger";btnClear.innerHTML="<i data-lucide='trash-2'></i> Effacer tout";
-    btnClear.onclick=function(){if(window.confirm("Effacer tout l'historique ?")){{localStorage.removeItem("bd30-dossiers");render();}}};
+    btnClear.onclick=function(){if(window.confirm("Effacer tout l'historique ?")){try{localStorage.removeItem("bd30-dossiers");}catch(e){}showToast("Historique effacé");render();}};
     acts.appendChild(btnClear);
   }
   var btnHome=document.createElement("button");btnHome.className="act-btn secondary";btnHome.innerHTML="<i data-lucide='home'></i> Accueil";btnHome.onclick=confirmReset;
@@ -2609,8 +3269,9 @@ function renderOpts(items){
   items.forEach(function(item){
     if(item._sep){wrap.appendChild(div("opts-group-label",item._sep));return;}
     var btn=document.createElement("button");
-    btn.className="opt"+(item.danger?" danger":"");
-    btn.innerHTML=(item.icon?"<span class='opt-icon'>"+item.icon+"</span>":"")+"<div class='opt-content'><div class='opt-label'>"+item.label+"</div>"+(item.desc?"<div class='opt-desc'>"+item.desc+"</div>":"")+"</div>"+(item.badge?"<span class='opt-badge'>"+item.badge+"</span>":"");
+    btn.className="opt"+(item.danger?" danger":"")+(item.selected?" opt-selected":"");
+    if(item.selected)btn.setAttribute("aria-pressed","true");
+    btn.innerHTML=(item.icon?"<span class='opt-icon'>"+item.icon+"</span>":"")+"<div class='opt-content'><div class='opt-label'>"+item.label+"</div>"+(item.desc?"<div class='opt-desc'>"+item.desc+"</div>":"")+"</div>"+(item.selected?"<span class='opt-check'><i data-lucide='check'></i></span>":"")+(item.badge?"<span class='opt-badge'>"+item.badge+"</span>":"");
     btn.onclick=item.cb;
     wrap.appendChild(btn);
   });
@@ -2703,6 +3364,8 @@ function card(q,sub,content){
 function inp(type,ph){
   var i=document.createElement("input");
   i.type=type;i.className="inp";if(ph)i.placeholder=ph;
+  // 📱 Clavier numérique sur mobile pour les champs nombre
+  if(type==="number")i.inputMode="decimal";
   // ✨ Attacher nettoyage automatique paste à TOUS les inputs
   attachCleanPaste(i);
   return i;
@@ -2763,7 +3426,7 @@ function sIntro(){
 
 function sMenu(){
   return card("Que souhaitez-vous calculer ?","Choisissez le type de demande",renderOpts([
-    {icon:"<i data-lucide='train-front'></i>",label:"Retard & Indemnisation",desc:"Calcul BD30/G30 — compensation retard",cb:function(){set({step:"delay",flow:"retard",segments:[],nbPass:0,delay:0,currentPassenger:0,buildingSegPassengers:[],buildingSeg:{},exceptionalIndemnity:null,selectedTGVForException:null,exceptionalPrimeEuros:null,exceptionalMaxAmt:null});}},
+    {icon:"<i data-lucide='train-front'></i>",label:"Retard & Indemnisation",desc:"Calcul BD30/G30 — compensation retard",cb:function(){set({step:"delay",flow:"retard",segments:[],nbPass:0,delay:0,currentPassenger:0,buildingSegPassengers:[],buildingSeg:{},exceptionalIndemnity:null,selectedTGVForException:null,exceptionalPrimeEuros:null,exceptionalMaxAmt:null,ouigoDelay:0,uniformTariff:false,selectedTarifUnique:null,fraisList:[],retardDossierId:null});}},
     {icon:"<i data-lucide='receipt'></i>",label:"Frais Annexes",desc:"Taxi, restauration, hôtel…",cb:function(){set({step:"frais_type",flow:"frais",fraisList:[]});}},
     {icon:"<i data-lucide='calendar-days'></i>",label:"Rétractation & Résiliation",desc:"Délais légaux et conditions",cb:function(){set({step:"dates_type",flow:"dates"});}},
     {icon:"<i data-lucide='book-open'></i>",label:"Barèmes & Règles",desc:"Consulter les tarifs et conditions",cb:function(){set({step:"bareme"});}},
@@ -2836,7 +3499,7 @@ function sDelay(){
   var manualBox=div("delay-manual-box");
   manualBox.appendChild(div("delay-manual-label","— ou saisir directement le retard —"));
   var manualRow=div("delay-manual-row");
-  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
+  var mi=document.createElement("input");mi.id="delay-min-inp";mi.type="number";mi.inputMode="numeric";mi.className="delay-min-input";mi.min=0;mi.max=1440;mi.placeholder="0";mi.value=localDelay||"";mi.addEventListener("input",function(e){localDelay=parseInt(e.target.value)||0;updateDisplay();});attachCleanPaste(mi);manualRow.appendChild(mi);
   manualRow.appendChild(div("delay-min-unit","min"));
   manualBox.appendChild(manualRow);
   wrap.appendChild(manualBox);
@@ -3082,20 +3745,7 @@ function sTarifUnique(){
 
   var items=tarifs.map(function(t){
     if(t.id==="prime_billet"){
-      return{
-        icon:"<i data-lucide='star'></i>",
-        label:"Billet Prime",
-        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
-        children:[
-          {_sep:"Titulaire — le voyageur est le titulaire"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarifUnique("prime_titulaire","Prime — Titulaire (FID)");}},
-          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarifUnique("prime_gvt_transitoire","Prime — GVT Transitoire");}},
-          {_sep:"Tiers — billet acheté pour un autre voyageur"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarifUnique("prime_fid_tiers","Prime — FID + Tiers");}},
-          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarifUnique("prime_gvt_tiers","Prime — GVT + Tiers");}},
-          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarifUnique("prime_tiers_seul","Prime — Tiers seul");}}
-        ]
-      };
+      return buildPrimeAccordionItem(confirmPrimeTarifUnique);
     }
     return{label:t.label,desc:t.desc,cb:function(){
       pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",t.label);
@@ -3177,20 +3827,7 @@ function sTarifPassenger(idx){
 
   var items=tarifs.map(function(t){
     if(t.id==="prime_billet"){
-      return{
-        icon:"<i data-lucide='star'></i>",
-        label:"Billet Prime",
-        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
-        children:[
-          {_sep:"Titulaire — le voyageur est le titulaire"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarif("prime_titulaire","Prime — Titulaire (FID)");}},
-          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarif("prime_gvt_transitoire","Prime — GVT Transitoire");}},
-          {_sep:"Tiers — billet acheté pour un autre voyageur"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarif("prime_fid_tiers","Prime — FID + Tiers");}},
-          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarif("prime_gvt_tiers","Prime — GVT + Tiers");}},
-          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarif("prime_tiers_seul","Prime — Tiers seul");}}
-        ]
-      };
+      return buildPrimeAccordionItem(confirmPrimeTarif);
     }
     return{label:t.label,desc:t.desc,cb:function(){
       pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),t.label);
@@ -3259,10 +3896,7 @@ function sPrimeDeposant(idx){
   // Indicateur de procédure
   var proc=div("info-box amber");
   proc.style.marginBottom="18px";
-  proc.innerHTML="<div class='info-icon'><i data-lucide='clipboard-list'></i></div><div><strong>Procédure selon le déposant :</strong><br>"
-    +"<span style='display:block;margin-top:6px;'>👤 <strong>Titulaire FID dépose</strong> — Traitement en file FID AV Voyage · Note interne : <em>« billet prime pour tiers »</em></span>"
-    +"<span style='display:block;margin-top:4px;'>🔄 <strong>Tiers dépose seul</strong> — Transférer en file <strong>Fid AV Voyage Senior Oscar / GVLC</strong> · Note interne : <em>« billet prime pour tiers »</em></span>"
-  +"</div>";
+  proc.innerHTML=PRIME_PROC_HTML;
 
   function confirmTarif(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif P"+(idx+1),tarifLabel);
@@ -3277,7 +3911,7 @@ function sPrimeDeposant(idx){
 
   var opts=renderOpts([
     {
-      icon:"<i data-lucide='id-card'></i>",
+      icon:"<i data-lucide='contact'></i>",
       label:"Le titulaire Prime (FID) dépose",
       desc:"Client fidélisé carte Prime — indemnisation : pts Prime + BAD tiers",
       badge:"<span style='color:#0066CC;font-weight:800;'>Pts + BAD</span>",
@@ -3301,10 +3935,7 @@ function sPrimeDeposant(idx){
 function sPrimeDeposantUnique(){
   var proc=div("info-box amber");
   proc.style.marginBottom="18px";
-  proc.innerHTML="<div class='info-icon'><i data-lucide='clipboard-list'></i></div><div><strong>Procédure selon le déposant :</strong><br>"
-    +"<span style='display:block;margin-top:6px;'>👤 <strong>Titulaire FID dépose</strong> — Traitement en file FID AV Voyage · Note interne : <em>« billet prime pour tiers »</em></span>"
-    +"<span style='display:block;margin-top:4px;'>🔄 <strong>Tiers dépose seul</strong> — Transférer en file <strong>Fid AV Voyage Senior Oscar / GVLC</strong> · Note interne : <em>« billet prime pour tiers »</em></span>"
-  +"</div>";
+  proc.innerHTML=PRIME_PROC_HTML;
 
   function confirmTarifUnique(tarifId,tarifLabel){
     pushH("<i data-lucide='ticket'></i>","Tarif (x"+S.nbPass+")",tarifLabel);
@@ -3315,7 +3946,7 @@ function sPrimeDeposantUnique(){
 
   var opts=renderOpts([
     {
-      icon:"<i data-lucide='id-card'></i>",
+      icon:"<i data-lucide='contact'></i>",
       label:"Le titulaire Prime (FID) dépose",
       desc:"Client fidélisé carte Prime — indemnisation : pts Prime + BAD tiers",
       badge:"<span style='color:#0066CC;font-weight:800;'>Pts + BAD</span>",
@@ -3347,20 +3978,7 @@ function sTarif(){
 
   var items=tarifs.map(function(t){
     if(t.id==="prime_billet"){
-      return{
-        icon:"<i data-lucide='star'></i>",
-        label:"Billet Prime",
-        desc:"Titulaire FID · GVT Transitoire · Billet pour un tiers",
-        children:[
-          {_sep:"Titulaire — le voyageur est le titulaire"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Prime — Titulaire (FID)",desc:"Titulaire carte Prime — indemnisation en points fidélité",badge:"<span style='color:#0088CE;font-weight:800;'>Pts FID</span>",cb:function(){confirmPrimeTarifSingle("prime_titulaire","Prime — Titulaire (FID)");}},
-          {icon:"<i data-lucide='arrow-right-to-line'></i>",label:"Prime — GVT Transitoire",desc:"Sortant du programme fidélité — BAD seul, pas de points",badge:"<span style='color:#007A84;font-weight:800;'>BAD seul</span>",cb:function(){confirmPrimeTarifSingle("prime_gvt_transitoire","Prime — GVT Transitoire");}},
-          {_sep:"Tiers — billet acheté pour un autre voyageur"},
-          {icon:"<i data-lucide='id-card'></i>",label:"Titulaire FID dépose",desc:"Ind. pts FID + BAD tiers · File FID AV Voyage",badge:"<span style='color:#5B2D8E;font-weight:800;'>Pts + BAD</span>",cb:function(){confirmPrimeTarifSingle("prime_fid_tiers","Prime — FID + Tiers");}},
-          {icon:"<i data-lucide='shield'></i>",label:"Titulaire GVT dépose",desc:"Double ind. BAD GVT + BAD tiers",badge:"<span style='color:#6E1E78;font-weight:800;'>BAD × 2</span>",cb:function(){confirmPrimeTarifSingle("prime_gvt_tiers","Prime — GVT + Tiers");}},
-          {icon:"<i data-lucide='user'></i>",label:"Tiers dépose seul",desc:"BAD fixe selon délai · Transfert file GVLC requis",badge:"<span style='color:#E05206;font-weight:800;'>BAD · GVLC</span>",cb:function(){confirmPrimeTarifSingle("prime_tiers_seul","Prime — Tiers seul");}}
-        ]
-      };
+      return buildPrimeAccordionItem(confirmPrimeTarifSingle);
     }
     return{label:t.label,desc:t.desc,cb:function(){
       pushH("<i data-lucide='ticket'></i>","Tarif",t.label);
@@ -3574,7 +4192,7 @@ function sExceptionalIndemnity(){
       var inputRow1=div("");
       inputRow1.style.cssText="display:flex;gap:10px;align-items:center;";
       var inpPts=document.createElement("input");
-      inpPts.type="number";inpPts.min="0";inpPts.step="500";inpPts.value="";inpPts.placeholder="Ex: 3 000";
+      inpPts.type="number";inpPts.inputMode="numeric";inpPts.min="0";inpPts.step="500";inpPts.value="";inpPts.placeholder="Ex: 3 000";
       inpPts.style.cssText="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--tx);font-size:15px;";
       inpPts.id="prime-pts-input";
       var ptsLabel=div("");ptsLabel.textContent="pts";
@@ -3607,7 +4225,7 @@ function sExceptionalIndemnity(){
       var inputRow2=div("");
       inputRow2.style.cssText="display:flex;gap:10px;align-items:center;";
       var inpEur=document.createElement("input");
-      inpEur.type="number";inpEur.min="0";inpEur.step="0.01";inpEur.value="";inpEur.placeholder="Ex: 7,50";
+      inpEur.type="number";inpEur.inputMode="decimal";inpEur.min="0";inpEur.step="0.01";inpEur.value="";inpEur.placeholder="Ex: 7,50";
       inpEur.style.cssText="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--tx);font-size:15px;";
       inpEur.id="prime-euros-input";
       var eurLabel=div("");eurLabel.textContent="€";
@@ -3718,7 +4336,7 @@ function sExceptionalIndemnity(){
       var inputRowMax=div("");
       inputRowMax.style.cssText="display:flex;gap:10px;align-items:center;margin-bottom:12px;";
       var inpMax=document.createElement("input");
-      inpMax.type="number";inpMax.min="0";inpMax.step="1";inpMax.value="";inpMax.placeholder="Ex: 30";
+      inpMax.type="number";inpMax.inputMode="numeric";inpMax.min="0";inpMax.step="1";inpMax.value="";inpMax.placeholder="Ex: 30";
       inpMax.style.cssText="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--tx);font-size:15px;";
       inpMax.id="max-amt-input";
       var maxLabel=div("");maxLabel.textContent="€ / voyageur";
@@ -4054,7 +4672,9 @@ function sResultRetard(){
     }
   }
 
-  var c=div("result-card");
+  // 6.4 — Glow contextuel selon le montant total
+  var glowCls=total>=75?" result-glow-green":(total>=30?" result-glow-amber":"");
+  var c=div("result-card"+glowCls);
 
   // CORRECTION 4 — Refus automatique si total > 0 et < 4€ (RT 2388)
   if(total>0 && total<4){
@@ -4110,7 +4730,8 @@ function sResultRetard(){
         rateStr=d.rate>0?d.rate+"%":(d.fix?"Forfait":"—");
       }
       var item=div("breakdown-item");
-      item.innerHTML="<div style='flex:1;'><div style='font-weight:600;color:var(--tx);'>"+d.carrier+" ("+d.tarif+")</div><div style='font-size:11px;color:var(--tx-muted);margin-top:2px;'>"+d.price.toFixed(2)+" € · "+rateStr+" · "+d.mode+"</div></div><div style='text-align:right;'><div style='font-weight:700;color:var(--prune);font-size:14px;'>"+d.displayAmt+"</div></div>";
+      var ptsBadge=d.points?"<div><span class='points-badge'><span class='pb-star'>⭐</span>"+d.points+" pts</span></div>":"";
+      item.innerHTML="<div style='flex:1;'><div style='font-weight:600;color:var(--tx);'>"+d.carrier+" ("+d.tarif+")</div><div style='font-size:11px;color:var(--tx-muted);margin-top:2px;'>"+d.price.toFixed(2)+" € · "+rateStr+" · "+d.mode+"</div></div><div style='text-align:right;'><div style='font-weight:700;color:var(--prune);font-size:14px;'>"+d.displayAmt+"</div>"+ptsBadge+"</div>";
       breakdown.appendChild(item);
     });
     c.appendChild(breakdown);
@@ -4119,7 +4740,7 @@ function sResultRetard(){
   // Récapitulatif global
   var summary=div("result-summary");
   summary.appendChild(div("summary-row",
-    "<div class='summary-label'>Total indemnisation</div><div class='summary-value highlight'>"+total.toFixed(2)+" €</div>"
+    "<div class='summary-label'>Total indemnisation</div><div class='summary-value highlight amount-highlight'>"+total.toFixed(2)+" €</div>"
   ));
 
   var modesStr="";
@@ -4152,8 +4773,8 @@ function sResultRetard(){
   info.innerHTML="<div class='info-icon'><i data-lucide='info'></i></div><div>Retard : "+delayStr+" | <strong>"+segments.filter(function(s){return s.elig;}).length+"</strong> segment(s) | <strong>"+S.nbPass+"</strong> passager(s)</div>";
   c.appendChild(info);
 
-  // Fonction pour copier le résultat
-  function copyToClipboard(btnEl){
+  // Construit le texte de copie du résultat (la copie passe par l'utilitaire copyToClipboard)
+  function buildRetardCopyText(){
     var modeLabel=segments.length===1?"G30":"BD30";
     var retardLabel=formatMin(S.delay);
 
@@ -4186,23 +4807,11 @@ function sResultRetard(){
         return part;
       });
 
-    var txt=modeLabel+" "+total.toFixed(2)+"€ | Retard "+retardLabel+" | "+segParts.join(" | ");
-
-    if(navigator.clipboard){
-      navigator.clipboard.writeText(txt).then(function(){
-        if(btnEl){
-          btnEl.innerHTML="<i data-lucide='check'></i> Copié!";
-          if(window.lucide)lucide.createIcons();
-          setTimeout(function(){btnEl.innerHTML="<i data-lucide='copy'></i> Copier";if(window.lucide)lucide.createIcons();},2000);
-        }
-      }).catch(function(){prompt("Copie manuelle :",txt);});
-    }else{
-      prompt("Copie manuelle :",txt);
-    }
+    return modeLabel+" "+total.toFixed(2)+"€ | Retard "+retardLabel+" | "+segParts.join(" | ");
   }
 
   var acts=div("action-row");
-  var btnCopy=document.createElement("button");btnCopy.className="act-btn success";btnCopy.innerHTML="<i data-lucide='copy'></i> Copier";btnCopy.onclick=function(){copyToClipboard(btnCopy);};
+  var btnCopy=document.createElement("button");btnCopy.className="act-btn success";btnCopy.innerHTML="<i data-lucide='copy'></i> Copier";btnCopy.onclick=function(){copyToClipboard(buildRetardCopyText(),btnCopy);};
 
   // Bouton "Ajouter des frais" seulement si G30/BD30 avec TGV/Intercités
   var hasEligibleForFrais=segments.some(function(s){return s.carrier==="tgv_dom"||s.carrier==="tgv_int"||s.carrier==="intercites";});
@@ -4238,6 +4847,7 @@ function sOUIGORetardSegment(){
 
   var delayInput=document.createElement("input");
   delayInput.type="number";
+  delayInput.inputMode="numeric";
   delayInput.id="ouigo-delay-inp";
   delayInput.min="0";
   delayInput.max="1440";
@@ -4546,7 +5156,9 @@ function sResultFrais(){
   // Total combiné
   var totalGlobal=indemniteRetard+totalFrais;
 
-  var c=div("result-card");
+  // 6.4 — Glow contextuel selon le montant total
+  var glowClsFrais=totalGlobal>=75?" result-glow-green":(totalGlobal>=30?" result-glow-amber":"");
+  var c=div("result-card"+glowClsFrais);
   var h=div("result-header");
   // RT : si dossier retard+frais → RT du retard ; si frais seuls (sans segments) → RT 2064
   var rtCodeFrais=segments.length>0?getRTCode_retard(segments):"2064";
@@ -4593,7 +5205,7 @@ function sResultFrais(){
   if(totalFrais>0){
     summary.appendChild(div("summary-row","<div class='summary-label'>Frais annexes</div><div class='summary-value'>"+totalFrais.toFixed(2)+" €</div>"));
   }
-  summary.appendChild(div("summary-row","<div class='summary-label highlight'>Total</div><div class='summary-value highlight'>"+totalGlobal.toFixed(2)+" €</div>"));
+  summary.appendChild(div("summary-row","<div class='summary-label highlight'>Total</div><div class='summary-value highlight amount-highlight'>"+totalGlobal.toFixed(2)+" €</div>"));
   c.appendChild(summary);
 
   var acts=div("action-row");
@@ -4682,11 +5294,7 @@ function sResultFrais(){
       txt += " | Frais "+totalFrais.toFixed(2)+"€ ("+fraisComposition.join(" + ")+")";
     }
 
-    navigator.clipboard.writeText(txt);
-    btnCopy.innerHTML="<i data-lucide='check'></i> Copié!";
-    setTimeout(function(){
-      btnCopy.innerHTML="<i data-lucide='copy'></i> Copier Retard+Frais";
-    }, 2000);
+    copyToClipboard(txt,btnCopy);
   };
   acts.appendChild(btnCopy);
   
@@ -4702,8 +5310,8 @@ function sResultFrais(){
 
 function sDatesType(){
   return card("Rétraction ou Résiliation ?","Choisissez le type de demande",renderOpts([
-    {icon:"<i data-lucide='calendar-days'></i>",label:"Rétraction de carte",desc:"Délai légal — 14 jours calendaires",cb:function(){set({step:"retraction",retractionData:{}});}},
-    {icon:"<i data-lucide='clipboard-list'></i>",label:"Résiliation abonnement Max",desc:"Calcul des frais et date d'effet",cb:function(){set({step:"resiliation",resiliationData:{}});}},
+    {icon:"<i data-lucide='calendar-days'></i>",label:"Rétraction de carte",desc:"Délai légal — 14 jours calendaires",cb:function(){set({step:"retraction",retractionData:{},specialDossierId:null});}},
+    {icon:"<i data-lucide='clipboard-list'></i>",label:"Résiliation abonnement Max",desc:"Calcul des frais et date d'effet",cb:function(){set({step:"resiliation",resiliationData:{},specialDossierId:null});}},
   ]));
 }
 
@@ -4750,32 +5358,26 @@ function calcRetractionDeadline(dateSignatureStr){
 function sRetraction(){
   var rd=S.retractionData||{};
   var wrap=div("step-card");
-  wrap.appendChild(div("step-title","Rétraction"));
-  wrap.appendChild(div("step-sub","Cartes avantage / Abonnement Max"));
-  wrap.appendChild(div("step-sub","Droit légal — 14 jours calendaires"));
+  wrap.appendChild(div("step-q","Rétraction"));
+  wrap.appendChild(div("step-sub","Cartes avantage / Abonnement Max — Droit légal, 14 jours calendaires"));
 
-  // Date de signature
-  var dateRow=div("input-row");
-  dateRow.appendChild(div("step-sub","Date de signature:"));
+  // Date de signature — form-group : label solidaire de son sélecteur
   var today=new Date().toISOString().split("T")[0];
-  var dateInput=inp("date",rd.dateSignature||today);
-  dateInput.id="retr-date-sig";
-  dateRow.appendChild(dateInput);
+  var dateRow=div("form-group");
+  dateRow.appendChild(div("form-label","Date de signature : <span class='tip' data-tip='Date d’achat de la carte ou de l’abonnement (signature du contrat)'>i</span>"));
+  dateRow.appendChild(makeDateSelect("retr-date-sig",rd.dateSignature||today,function(iso){
+    S.retractionData={...(S.retractionData||{}),dateSignature:iso};
+  }));
   wrap.appendChild(dateRow);
-  setTimeout(function(){
-    var el=document.getElementById("retr-date-sig");
-    if(el){
-      el.addEventListener("change",function(){
-        S.retractionData={...(S.retractionData||{}),dateSignature:this.value};
-      });
-    }
-  },10);
 
   // Bouton calculer
   var btn=document.createElement("button");
   btn.className="btn-confirm";
   btn.textContent="Calculer →";
   btn.onclick=function(){
+    // Lire la valeur courante du sélecteur (couvre la valeur par défaut jamais modifiée)
+    var el=document.getElementById("retr-date-sig");
+    if(el&&el.dataset&&el.dataset.value)S.retractionData={...(S.retractionData||{}),dateSignature:el.dataset.value};
     var currentData=S.retractionData||{};
     if(!currentData.dateSignature){alert("Remplissez la date de signature");return;}
     set({step:"result_retraction"});
@@ -4788,11 +5390,18 @@ function sResultRetraction(){
   var data=S.retractionData||{};
   var deadline=calcRetractionDeadline(data.dateSignature);
 
+  // Jours restants calculés à minuit (évite les décalages liés à l'heure courante)
+  var _now=new Date();
+  var _nowMid=new Date(_now.getFullYear(),_now.getMonth(),_now.getDate());
+  var _deadMid=new Date(deadline.getFullYear(),deadline.getMonth(),deadline.getDate());
+  var daysLeft=Math.round((_deadMid-_nowMid)/(1000*60*60*24));
+  var isExpired=daysLeft<0;
+
   var c=div("result-card");
   var header=div("result-header");
   header.appendChild(div("result-mode","DROIT DE RÉTRACTION"));
   header.appendChild(div("result-amount","14"));
-  header.appendChild(div("result-label","jours calendaires"));
+  header.appendChild(div("result-label",isExpired?"jours calendaires — délai dépassé":"jours calendaires"));
   header.appendChild(div("rt-badge","RT\u00a05312"));
   c.appendChild(header);
 
@@ -4802,10 +5411,19 @@ function sResultRetraction(){
   var deadlineStr=deadline.getDate().toString().padStart(2,"0")+"/"+(deadline.getMonth()+1).toString().padStart(2,"0")+"/"+deadline.getFullYear();
   var signatureStr=dateToFr(data.dateSignature);
 
+  var joursRestantsVal;
+  if(isExpired){
+    joursRestantsVal="<span style='color:var(--red);font-weight:800;'>Dépassé depuis "+Math.abs(daysLeft)+" jour"+(Math.abs(daysLeft)>1?"s":"")+"</span>";
+  }else if(daysLeft===0){
+    joursRestantsVal="<span style='color:var(--amber);font-weight:800;'>Dernier jour aujourd'hui</span>";
+  }else{
+    joursRestantsVal=daysLeft+" jour"+(daysLeft>1?"s":"");
+  }
+
   var items=[
     {label:"Date signature",val:signatureStr},
     {label:"Date limite",val:deadlineStr},
-    {label:"Jours restants",val:Math.ceil((deadline-new Date())/(1000*60*60*24))+" jours"}
+    {label:"Jours restants",val:joursRestantsVal}
   ];
 
   for(var i=0;i<items.length;i++){
@@ -4817,13 +5435,19 @@ function sResultRetraction(){
 
   var msgItem=div("breakdown-item");
   msgItem.appendChild(div("breakdown-label","Remboursement"));
-  msgItem.appendChild(div("breakdown-value","Integral (droit légal)"));
+  msgItem.appendChild(div("breakdown-value",isExpired?"<span style='color:var(--red);font-weight:700;'>Sous réserve — demande avant le "+deadlineStr+"</span>":"Integral (droit légal)"));
   bd.appendChild(msgItem);
 
   c.appendChild(bd);
 
-  var info=div("info-box blue");
-  info.innerHTML="<div class='info-icon'><i data-lucide='check-circle'></i></div><div><strong>À titre informatif</strong> — Consultez les CGV de l'abonnement pour les modalités de demande de rétraction auprès du service client.</div>";
+  var info;
+  if(isExpired){
+    info=div("info-box amber");
+    info.innerHTML="<div class='info-icon'><i data-lucide='alert-triangle'></i></div><div><strong>Délai de rétractation dépassé</strong> — La demande n'est éligible que si elle a été <strong>effectuée avant le "+deadlineStr+"</strong>. Vérifier la date de dépôt de la demande du client (mail, courrier, formulaire) avant tout remboursement.</div>";
+  }else{
+    info=div("info-box blue");
+    info.innerHTML="<div class='info-icon'><i data-lucide='check-circle'></i></div><div><strong>À titre informatif</strong> — Consultez les CGV de l'abonnement pour les modalités de demande de rétraction auprès du service client.</div>";
+  }
   c.appendChild(info);
 
   var acts=div("action-row");
@@ -4834,10 +5458,14 @@ function sResultRetraction(){
     var txt="RÉTRACTION - Cartes avantage / Abonnement Max\n";
     txt+="Date signature: "+signatureStr+"\n";
     txt+="Date limite: "+deadlineStr+"\n";
-    txt+="Remboursement: Intégral (droit légal consommateur)";
-    navigator.clipboard.writeText(txt);
-    btnCopy.innerHTML="<i data-lucide='check'></i> Copié!";
-    setTimeout(function(){btnCopy.innerHTML="<i data-lucide='copy'></i> Copier";},2000);
+    if(isExpired){
+      txt+="DÉLAI DÉPASSÉ depuis "+Math.abs(daysLeft)+" jour"+(Math.abs(daysLeft)>1?"s":"")+"\n";
+      txt+="Remboursement: Sous réserve — éligible uniquement si la demande a été effectuée avant le "+deadlineStr;
+    }else{
+      txt+="Jours restants: "+daysLeft+"\n";
+      txt+="Remboursement: Intégral (droit légal consommateur)";
+    }
+    copyToClipboard(txt,btnCopy);
   };
   acts.appendChild(btnCopy);
   var btnNouv=document.createElement("button");
@@ -5011,78 +5639,67 @@ function sResiliation(){
   var wrap=card("Résiliation Abonnement","Saisissez les informations");
   var rd=S.resiliationData||{};
 
-  // Type d'abonnement avec renderOpts
-  wrap.appendChild(div("step-sub","Type d'abonnement:"));
+  // Type d'abonnement — état sélectionné explicite + tooltips d'aide métier
+  var typeLbl=div("form-label","Type d'abonnement :");
+  typeLbl.style.marginBottom="10px";
+  wrap.appendChild(typeLbl);
   var typeOpts=renderOpts([
-    {label:"Max Jeune (-26 ans)",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_jeune"};render();}},
-    {label:"Max Senior (+60 ans)",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_senior"};render();}},
-    {label:"Max Actif",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_actif"};render();}},
-    {label:"Max Actif+",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_actif_plus"};render();}},
+    {label:"Max Jeune (-26 ans) <span class='tip' data-tip='Réservé aux voyageurs de 16 à 27 ans inclus. Valable sur TGV INOUI et INTERCITÉS.'>i</span>",selected:rd.type==="max_jeune",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_jeune"};render();}},
+    {label:"Max Senior (+60 ans) <span class='tip' data-tip='Réservé aux voyageurs de 60 ans et plus.'>i</span>",selected:rd.type==="max_senior",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_senior"};render();}},
+    {label:"Max Actif <span class='tip' data-tip='Destiné aux voyageurs fréquents pour des trajets spécifiques du lundi au jeudi.'>i</span>",selected:rd.type==="max_actif",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_actif"};render();}},
+    {label:"Max Actif+ <span class='tip' data-tip='Formule étendue incluant des options de flexibilité maximale le week-end.'>i</span>",selected:rd.type==="max_actif_plus",cb:function(){S.resiliationData={...(S.resiliationData||{}),type:"max_actif_plus"};render();}},
   ]);
+  typeOpts.style.marginBottom="18px";
   wrap.appendChild(typeOpts);
 
-  // Montant mensuel (Max Actif seulement)
+  // Montant mensuel (Max Actif seulement) — form-group
   if(rd.type==="max_actif"||rd.type==="max_actif_plus"){
-    var montRow=div("input-row");
-    montRow.appendChild(div("step-sub","Montant mensuel (€):"));
-    var montInput=inp("number",String(rd.montantMensuel||150));
+    var montRow=div("form-group");
+    montRow.appendChild(div("form-label","Montant mensuel (€) :"));
+    var montInput=inp("number");
     montInput.min=0;
     montInput.step="0.01";
     montInput.id="resil-montant";
+    montInput.value=rd.montantMensuel!=null?rd.montantMensuel:150;
+    montInput.addEventListener("change",function(){
+      S.resiliationData={...(S.resiliationData||{}),montantMensuel:parseFloat(this.value)||0};
+    });
     montRow.appendChild(montInput);
     wrap.appendChild(montRow);
-    // Handler pour montant
-    setTimeout(function(){
-      var el=document.getElementById("resil-montant");
-      if(el){
-        el.addEventListener("change",function(){
-          S.resiliationData={...(S.resiliationData||{}),montantMensuel:parseFloat(this.value)||0};
-        });
-      }
-    },10);
   }
 
-  // Date d'activation
-  var dateRow1=div("input-row");
-  dateRow1.appendChild(div("step-sub","Date d'activation:"));
-  var dateInput1=inp("date",rd.dateActivation||"2024-01-01");
-  dateInput1.id="resil-date-act";
-  dateRow1.appendChild(dateInput1);
+  // Date d'activation — form-group + sélecteur Jour/Mois/Année + tooltip
+  var dateRow1=div("form-group");
+  dateRow1.appendChild(div("form-label","Date d'activation : <span class='tip' data-tip='Date de début de validité de l’abonnement mensuel ou annuel.'>i</span>"));
+  dateRow1.appendChild(makeDateSelect("resil-date-act",rd.dateActivation||"2024-01-01",function(iso){
+    S.resiliationData={...(S.resiliationData||{}),dateActivation:iso};
+  }));
   wrap.appendChild(dateRow1);
-  setTimeout(function(){
-    var el=document.getElementById("resil-date-act");
-    if(el){
-      el.addEventListener("change",function(){
-        S.resiliationData={...(S.resiliationData||{}),dateActivation:this.value};
-      });
-    }
-  },10);
 
-  // Date de demande
-  var dateRow2=div("input-row");
-  dateRow2.appendChild(div("step-sub","Date de demande:"));
+  // Date de demande — form-group + sélecteur Jour/Mois/Année + tooltip
   var today=new Date().toISOString().split("T")[0];
-  var dateInput2=inp("date",rd.dateResiliation||today);
-  dateInput2.id="resil-date-dem";
-  dateRow2.appendChild(dateInput2);
+  var dateRow2=div("form-group");
+  dateRow2.appendChild(div("form-label","Date de demande : <span class='tip' data-tip='Date à laquelle le voyageur a déposé sa demande de compensation G30.'>i</span>"));
+  dateRow2.appendChild(makeDateSelect("resil-date-dem",rd.dateResiliation||today,function(iso){
+    S.resiliationData={...(S.resiliationData||{}),dateResiliation:iso};
+  }));
   wrap.appendChild(dateRow2);
-  setTimeout(function(){
-    var el=document.getElementById("resil-date-dem");
-    if(el){
-      el.addEventListener("change",function(){
-        S.resiliationData={...(S.resiliationData||{}),dateResiliation:this.value};
-      });
-    }
-  },10);
 
-  // Bouton calculer
+  // Bouton calculer — lit les valeurs courantes des champs (couvre les valeurs par défaut)
   var btn=document.createElement("button");
   btn.className="btn-confirm";
   btn.textContent="Calculer →";
   btn.onclick=function(){
-    var currentData=S.resiliationData||{};
-    if(!currentData.type){alert("Sélectionnez un type d'abonnement");return;}
-    if(!currentData.dateActivation||!currentData.dateResiliation){alert("Remplissez les deux dates");return;}
+    var patch={...(S.resiliationData||{})};
+    var mEl=document.getElementById("resil-montant");
+    var aEl=document.getElementById("resil-date-act");
+    var dEl=document.getElementById("resil-date-dem");
+    if(mEl)patch.montantMensuel=parseFloat(mEl.value)||0;
+    if(aEl&&aEl.dataset&&aEl.dataset.value)patch.dateActivation=aEl.dataset.value;
+    if(dEl&&dEl.dataset&&dEl.dataset.value)patch.dateResiliation=dEl.dataset.value;
+    S.resiliationData=patch;
+    if(!patch.type){alert("Sélectionnez un type d'abonnement");return;}
+    if(!patch.dateActivation||!patch.dateResiliation){alert("Remplissez les deux dates");return;}
     set({step:"result_resiliation"});
   };
   wrap.appendChild(btn);
@@ -5159,9 +5776,7 @@ function sResultResiliation(){
     txt+="Ancienneté: "+calc.mois+" mois\n";
     txt+="Frais: "+(calc.gratuit?"Gratuit":calc.frais.toFixed(2)+"€")+"\n";
     txt+="Date d'effet: "+effectiveDate.toLocaleDateString("fr-FR")+"\n\n"+calc.message;
-    navigator.clipboard.writeText(txt);
-    btnCopy.innerHTML="<i data-lucide='check'></i> Copié!";
-    setTimeout(function(){btnCopy.innerHTML="<i data-lucide='copy'></i> Copier";},2000);
+    copyToClipboard(txt,btnCopy);
   };
   acts.appendChild(btnCopy);
   var btnNouv=document.createElement("button");
@@ -5182,7 +5797,7 @@ function render(){
   app.innerHTML="";
 
   document.documentElement.setAttribute("data-theme",S.dark?"dark":"light");
-  localStorage.setItem("bd30-theme",S.dark?"dark":"light");
+  try{localStorage.setItem("bd30-theme",S.dark?"dark":"light");}catch(e){}
 
   var hdr=div("hdr");
   var logo=div("hdr-logo");
@@ -5204,16 +5819,23 @@ function render(){
   if(S.step!=="menu"){
     // Bouton Retour (si historique)
     if(S.history.length>0){
-      var backBtn=document.createElement("button");backBtn.className="icon-btn";backBtn.title="Retour à l'étape précédente";backBtn.innerHTML="<i data-lucide='arrow-left'></i>";backBtn.onclick=goBack;
+      var backBtn=document.createElement("button");backBtn.className="icon-btn";backBtn.title="Retour à l'étape précédente";backBtn.setAttribute("aria-label","Retour à l'étape précédente");backBtn.innerHTML="<i data-lucide='arrow-left'></i>";backBtn.onclick=goBack;
       right.appendChild(backBtn);
     }
     // Bouton Accueil (Nouvelle demande)
-    var hb=document.createElement("button");hb.className="icon-btn";hb.title="Nouvelle demande";hb.innerHTML="<i data-lucide='home'></i>";hb.onclick=confirmReset;
+    var hb=document.createElement("button");hb.className="icon-btn";hb.title="Nouvelle demande";hb.setAttribute("aria-label","Nouvelle demande");hb.innerHTML="<i data-lucide='home'></i>";hb.onclick=confirmReset;
     right.appendChild(hb);
   }
-  var hisB=document.createElement("button");hisB.className="icon-btn";hisB.title="Historique des dossiers";hisB.innerHTML="<i data-lucide='clock'></i>";hisB.onclick=function(){set({step:"dossier_history"});};
+  var hisB=document.createElement("button");hisB.className="icon-btn";hisB.title="Historique des dossiers";hisB.setAttribute("aria-label","Historique des dossiers");hisB.innerHTML="<i data-lucide='clock'></i>";hisB.onclick=function(){set({step:"dossier_history"});};
   right.appendChild(hisB);
-  var db=document.createElement("button");db.className="icon-btn";db.innerHTML=S.dark?"<i data-lucide='sun'></i>":"<i data-lucide='moon'></i>";db.onclick=function(){set({dark:!S.dark});};
+  var db=document.createElement("button");db.className="icon-btn";db.title=S.dark?"Passer en mode clair":"Passer en mode sombre";db.setAttribute("aria-label",S.dark?"Passer en mode clair":"Passer en mode sombre");db.innerHTML=S.dark?"<i data-lucide='sun'></i>":"<i data-lucide='moon'></i>";
+  db.onclick=function(){
+    // 6.8 — Transition douce du thème pendant le toggle uniquement
+    var root=document.documentElement;
+    root.classList.add("theme-transitioning");
+    set({dark:!S.dark});
+    setTimeout(function(){root.classList.remove("theme-transitioning");},350);
+  };
   right.appendChild(db);
   hdr.appendChild(right);
   app.appendChild(hdr);
@@ -5259,8 +5881,10 @@ function render(){
       });
       var _summary=_ml+" "+_t.toFixed(2)+"€ | Retard "+formatMin(S.delay)+" | "+(_segParts.join(" | ")||"—");
       pushH("<i data-lucide='check-circle-2'></i>","Résultat",_summary);
-      var _dosId=saveRetardDossier({ml:_ml,delay:S.delay,retardTotal:_t,total:_t,segs:_segs,summary:_summary});
+      var _wasUpdate=!!S.retardDossierId;
+      var _dosId=saveRetardDossier({ml:_ml,delay:S.delay,retardTotal:_t,total:_t,segs:_segs,summary:_summary},S.retardDossierId||null);
       S.retardDossierId=_dosId;
+      if(_dosId)showToast(_wasUpdate?"Dossier mis à jour dans l'historique":"Dossier enregistré dans l'historique");
     }
   }
   if(S.step==="result_frais"){
@@ -5281,6 +5905,38 @@ function render(){
       }else{
         saveRetardDossier({ml:null,delay:null,retardTotal:0,total:_tf,segs:[],summary:_sfr,frais:_fraisArr,fraisTotal:_tf});
       }
+      showToast("Dossier enregistré dans l'historique");
+    }
+  }
+  // Auto-enregistrement Rétractation dans l'historique des dossiers
+  if(S.step==="result_retraction"&&S.retractionData&&S.retractionData.dateSignature){
+    var _lhR=S.history.length?S.history[S.history.length-1]:null;
+    if(!_lhR||_lhR.q!=="Résultat rétractation"){
+      var _dlR=calcRetractionDeadline(S.retractionData.dateSignature);
+      var _dlStrR=_dlR.getDate().toString().padStart(2,"0")+"/"+(_dlR.getMonth()+1).toString().padStart(2,"0")+"/"+_dlR.getFullYear();
+      var _sigStrR=dateToFr(S.retractionData.dateSignature);
+      var _nR=new Date();
+      var _leftR=Math.round((new Date(_dlR.getFullYear(),_dlR.getMonth(),_dlR.getDate())-new Date(_nR.getFullYear(),_nR.getMonth(),_nR.getDate()))/(1000*60*60*24));
+      var _expR=_leftR<0;
+      var _sumR="Rétractation — signature "+_sigStrR+" · limite "+_dlStrR+(_expR?" · DÉLAI DÉPASSÉ ("+Math.abs(_leftR)+" j)":" · "+_leftR+" j restant"+(_leftR>1?"s":""));
+      pushH("<i data-lucide='calendar-days'></i>","Résultat rétractation",_sumR);
+      S.specialDossierId=saveSpecialDossier("retraction",_sumR,{signature:_sigStrR,deadline:_dlStrR,depasse:_expR},S.specialDossierId||null);
+      if(S.specialDossierId)showToast("Dossier enregistré dans l'historique");
+    }
+  }
+  // Auto-enregistrement Résiliation dans l'historique des dossiers
+  if(S.step==="result_resiliation"&&S.resiliationData&&S.resiliationData.type&&S.resiliationData.dateActivation&&S.resiliationData.dateResiliation){
+    var _lhZ=S.history.length?S.history[S.history.length-1]:null;
+    if(!_lhZ||_lhZ.q!=="Résultat résiliation"){
+      var _calcZ=calcResiliationFees(S.resiliationData.type,S.resiliationData.dateActivation,S.resiliationData.dateResiliation);
+      var _effZ=calcResiliationDate(S.resiliationData.type,S.resiliationData.dateActivation,S.resiliationData.dateResiliation);
+      var _typeZ=(S.resiliationData.type||"").replace(/_/g," ").toUpperCase();
+      var _fraisZ=_calcZ.impossible?"Non résiliable":(_calcZ.gratuit?"Gratuit":_calcZ.frais.toFixed(2)+"€");
+      var _effStrZ=_effZ.getDate().toString().padStart(2,"0")+"/"+String(_effZ.getMonth()+1).padStart(2,"0")+"/"+_effZ.getFullYear();
+      var _sumZ="Résiliation "+_typeZ+" — "+_fraisZ+(_calcZ.impossible?"":" · effet "+_effStrZ)+" · ancienneté "+_calcZ.mois+" mois";
+      pushH("<i data-lucide='clipboard-list'></i>","Résultat résiliation",_sumZ);
+      S.specialDossierId=saveSpecialDossier("resiliation",_sumZ,{abo:_typeZ,frais:_fraisZ,effet:_calcZ.impossible?null:_effStrZ,impossible:!!_calcZ.impossible},S.specialDossierId||null);
+      if(S.specialDossierId)showToast("Dossier enregistré dans l'historique");
     }
   }
 
@@ -5294,7 +5950,7 @@ function render(){
       cn.appendChild(div("hist-q",item.q));
       cn.appendChild(div("hist-a",item.a));
       var eb=document.createElement("button");
-      eb.className="hist-edit";eb.title="Modifier";eb.innerHTML="<i data-lucide='pencil'></i>";
+      eb.className="hist-edit";eb.title="Modifier";eb.setAttribute("aria-label","Modifier cette réponse");eb.innerHTML="<i data-lucide='pencil'></i>";
       (function(idx){eb.onclick=function(){editHistAt(idx);};})(histIdx);
       hi.appendChild(ic);hi.appendChild(cn);hi.appendChild(eb);
       hist.appendChild(hi);
@@ -5302,14 +5958,27 @@ function render(){
     app.appendChild(hist);
   }
 
-  // Barre de progression
+  // Barre de progression (6.6 — largeur animée depuis la valeur précédente + badge % flottant)
   if(S.step!=="menu"){
     var pct=STEP_PROGRESS[S.step]||0;
+    var prevPct=window._lastProgressPct||0;
     var pt=div("progress-track");
     var pf=div("progress-fill");
-    pf.style.width=(pct*100)+"%";
+    pf.style.width=(prevPct*100)+"%";
     pt.appendChild(pf);
+    var pb=div("progress-badge",Math.round(pct*100)+"%");
+    pb.style.left=Math.max(4,Math.min(96,prevPct*100))+"%";
+    pt.appendChild(pb);
     app.appendChild(pt);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        pf.style.width=(pct*100)+"%";
+        pb.style.left=Math.max(4,Math.min(96,pct*100))+"%";
+      });
+    });
+    window._lastProgressPct=pct;
+  }else{
+    window._lastProgressPct=0;
   }
 
   var content;
@@ -5346,7 +6015,9 @@ function render(){
     case"dossier_history":content=sDossierHistory();break;
     default:content=sMenu();
   }
-  app.appendChild(content);
+  // Certaines fonctions d'étape redirigent via set() et retournent undefined :
+  // le render planifié peindra l'étape cible au frame suivant.
+  if(content)app.appendChild(content);
 
   // Touche Entrée → clic sur le premier .btn-confirm visible
   app.querySelectorAll("input[type='number'],input[type='text'],input[type='date'],input.time-input").forEach(function(inp){
@@ -5365,15 +6036,19 @@ function render(){
     try{lucide.createIcons();}catch(e){}
   }
 
-  setTimeout(function(){
+  requestAnimationFrame(function(){
     var cards=document.querySelectorAll(".step-card");
     var target=cards[cards.length-1];
     if(target){
-      var y=target.getBoundingClientRect().top+window.pageYOffset-24;
+      // Tenir compte du header sticky : sans cet offset, le titre et les premiers
+      // labels de la carte se retrouvent masqués sous la barre flottante
+      var hdrEl=document.querySelector(".hdr");
+      var topOffset=hdrEl?hdrEl.getBoundingClientRect().height+34:24;
+      var y=target.getBoundingClientRect().top+window.pageYOffset-topOffset;
       window.scrollTo({top:Math.max(0,y),behavior:"smooth"});
     }
     setupSpotlight();
-  },50);
+  });
 }
 
 function setupSpotlight(){
@@ -5401,7 +6076,7 @@ function setupSpotlight(){
   });
 }
 
-if(localStorage.getItem("bd30-theme")==="dark")S.dark=true;
+try{if(localStorage.getItem("bd30-theme")==="dark")S.dark=true;}catch(e){}
 render();
 </script>
 
@@ -5482,10 +6157,12 @@ render();
 
     el.addEventListener('mousemove', function (e) {
       var r  = el.getBoundingClientRect();
-      var dx = (e.clientX - r.left - r.width  * 0.5) * 0.2;
-      var dy = (e.clientY - r.top  - r.height * 0.5) * 0.2;
-      el.style.transition = 'transform 0.1s ease';
-      el.style.transform  = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.02)';
+      /* Effet adouci : coefficient divisé par 2 (0.2 → 0.1), translation plafonnée
+         à ±4px et lissage allongé — micro-interaction subtile, plus de suivi marqué */
+      var dx = Math.max(-4, Math.min(4, (e.clientX - r.left - r.width  * 0.5) * 0.1));
+      var dy = Math.max(-4, Math.min(4, (e.clientY - r.top  - r.height * 0.5) * 0.1));
+      el.style.transition = 'transform 0.18s cubic-bezier(0.25, 1, 0.5, 1)';
+      el.style.transform  = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.01)';
     }, { passive: true });
 
     el.addEventListener('mouseleave', function () {
@@ -5503,22 +6180,10 @@ render();
     });
   }
 
-  /* ── 4. Number counter ───────────────────────────────────────────────── */
+  /* ── 4. Number counter — délègue à l'utilitaire global animateCountUp ── */
   function countUp(el, to, ms) {
     if (noMotion()) return;
-    var raw    = el.textContent.trim();
-    var m      = raw.match(/^([\d\s,.]+)/);
-    if (!m) return;
-    var suffix = raw.slice(m[0].length);
-    var dec    = raw.indexOf('.') >= 0 ? 2 : 0;
-    var t0     = null;
-    el.dataset.pmCount = '1';
-    (function frame(ts) {
-      if (!t0) t0 = ts;
-      var p = Math.min((ts - t0) / ms, 1);
-      el.textContent = (to * easeOutQuart(p)).toFixed(dec) + suffix;
-      if (p < 1) requestAnimationFrame(frame);
-    })(performance.now());
+    animateCountUp(el, to, ms);
   }
 
   /* ── 5. Stagger reveal ───────────────────────────────────────────────── */
@@ -5573,10 +6238,50 @@ render();
     }
   }
 
-  /* ── 7. Patch render() — exit → original → afterRender ──────────────── */
+  /* ── 7. Patch render() — exit directionnel 200ms → skeleton (résultats) → original → afterRender ── */
   var _orig  = window.render;
   var _busy  = false;
   var _queue = null;
+  var _lastStep = null;
+
+  /* Skeleton shimmer affiché 220ms avant les écrans résultat (6.3) */
+  function buildSkeletonCard() {
+    var sk = document.createElement('div');
+    sk.className = 'result-card';
+    sk.setAttribute('aria-hidden', 'true');
+    sk.innerHTML =
+      '<div class="skeleton" style="height:150px;border-radius:22px;margin-bottom:18px;"></div>' +
+      '<div class="skeleton" style="height:16px;width:72%;margin-bottom:10px;"></div>' +
+      '<div class="skeleton" style="height:16px;width:58%;margin-bottom:10px;"></div>' +
+      '<div class="skeleton" style="height:16px;width:64%;"></div>';
+    return sk;
+  }
+
+  /* ── Scroll automatique vers la carte résultat ──
+     Déclenché juste après l'injection de l'écran final (fin du skeleton) :
+     amène la carte en haut de la zone de lecture (le scroll-margin-top CSS
+     gère l'espace sous le header sticky). Respecte prefers-reduced-motion. */
+  function scrollToResult() {
+    if (typeof S === 'undefined') return;
+    if (S.step !== 'result_retard' && S.step !== 'result_frais' &&
+        S.step !== 'result_retraction' && S.step !== 'result_resiliation') return;
+    var card = document.querySelector('.result-card');
+    if (!card) return;
+    card.scrollIntoView({ behavior: noMotion() ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  function commitRender(args) {
+    /* Capturer le changement d'étape AVANT de mettre _lastStep à jour :
+       on ne scrolle qu'à l'ARRIVÉE sur le résultat, pas sur ses re-renders
+       (toggle dark mode, etc.) */
+    var stepChanged = (typeof S !== 'undefined') && _lastStep !== S.step;
+    _orig.apply(window, args);          /* renders new content with pm-enter CSS */
+    _lastStep = (typeof S !== 'undefined') ? S.step : null;
+    setTimeout(afterRender, 40);
+    if (stepChanged) setTimeout(scrollToResult, 90);
+    /* Flush any queued render */
+    if (_queue) { var q = _queue; _queue = null; window.render.apply(window, q); }
+  }
 
   window.render = function () {
     var _args = arguments;
@@ -5593,28 +6298,38 @@ render();
 
     /* First render or reduced-motion: skip exit animation */
     if (!app || kids.length === 0 || noMotion()) {
+      var stepChanged0 = (typeof S !== 'undefined') && _lastStep !== S.step;
       _orig.apply(window, _args);
+      _lastStep = (typeof S !== 'undefined') ? S.step : null;
       setTimeout(afterRender, 55);
+      if (stepChanged0) setTimeout(scrollToResult, 90);
       return;
     }
 
     _busy = true;
 
-    /* Exit — 95ms fade + upward nudge on content (not header) */
+    /* Exit directionnel — slide + fade 200ms via classe .step-exit (6.2) */
+    var goingBack = window._navDir === 'back';
     kids.forEach(function (el) {
-      el.style.transition = 'opacity 0.09s ease, transform 0.09s ease';
-      el.style.opacity    = '0';
-      el.style.transform  = 'translateY(-5px)';
+      el.classList.add('step-exit');
+      if (goingBack) el.classList.add('step-exit-back');
     });
 
-    setTimeout(function () {
-      _busy = false;
-      _orig.apply(window, _args);       /* renders new content with pm-enter CSS */
-      setTimeout(afterRender, 40);
+    /* Skeleton uniquement à l'arrivée sur un écran résultat (changement d'étape) */
+    var wantSkeleton = (typeof S !== 'undefined') &&
+      (S.step === 'result_retard' || S.step === 'result_frais') &&
+      _lastStep !== S.step;
 
-      /* Flush any queued render */
-      if (_queue) { var q = _queue; _queue = null; window.render.apply(window, q); }
-    }, 95);
+    setTimeout(function () {
+      if (wantSkeleton) {
+        kids.forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+        app.appendChild(buildSkeletonCard());
+        setTimeout(function () { _busy = false; commitRender(_args); }, 220);
+      } else {
+        _busy = false;
+        commitRender(_args);
+      }
+    }, 200);
   };
 
   /* ── Boot: run hooks on the already-rendered initial state ──────────── */
