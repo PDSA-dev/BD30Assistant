@@ -2780,6 +2780,15 @@ function makeDateSelect(id,isoValue,onChange){
   return makeDateInput(id,isoValue,onChange);
 }
 
+// ── Registre des listeners onOutside actifs (nettoyage à chaque render()) ──
+var _dpOutsideListeners = [];
+function _dpClearAllOutside(){
+  _dpOutsideListeners.forEach(function(fn){
+    document.removeEventListener("mousedown", fn, true);
+  });
+  _dpOutsideListeners = [];
+}
+
 // ── Date Picker premium : saisie clavier JJ/MM/AAAA + calendrier popup ──
 function makeDateInput(id,isoValue,onChange){
   var now=new Date();
@@ -2855,6 +2864,9 @@ function makeDateInput(id,isoValue,onChange){
     if(calEl){calEl.remove();calEl=null;}
     calOpen=false;
     field.classList.remove("dp-focused");
+    document.removeEventListener("mousedown",onOutside,true);
+    var idx=_dpOutsideListeners.indexOf(onOutside);
+    if(idx>-1)_dpOutsideListeners.splice(idx,1);
   }
 
   function buildCalendar(){
@@ -3000,6 +3012,7 @@ function makeDateInput(id,isoValue,onChange){
     }
     setTimeout(function(){
       document.addEventListener("mousedown",onOutside,true);
+      _dpOutsideListeners.push(onOutside);
     },0);
   }
 
@@ -5885,7 +5898,7 @@ function sBareme(){
       content:"<table style='width:100%;border-collapse:collapse;font-size:12px;'><tr style='background:var(--surface2);'><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>RETARD</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>TGV INOUI DOM.</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>TGV INTL.</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>INTERCITÉS</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>ÉCO 100%</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>OUIGO</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>TER</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>KRONO+</th></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>30–59 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25% BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25% BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25% BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25% BAD</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>60–119 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>25%</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>120–179 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>180–239 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>≥ 240 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>100% BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>50%</td><td style='padding:8px;border-bottom:1px solid var(--border);'>75%</td></tr></table><div style='font-size:11px;color:var(--tx-muted);margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px;'><strong>Note:</strong> Carte Liberté : plancher forfaitaire 5 € minimum par passager à partir de 30 min de retard. Tarif Groupe : prix total du groupe, 1 seul dossier BAD (pas de multiplication par passager).</div>"
     },
     {
-      title:"Abonnés Max / Forfaits / Pass Rail",
+      title:"Abonnés Max / Forfaits",
       color:"#3D7F3D",
       content:"<table style='width:100%;border-collapse:collapse;font-size:12px;'><tr style='background:var(--surface2);'><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>RETARD</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>MONTANT BAD</th><th style='padding:8px;text-align:left;border-bottom:1px solid var(--border);'>OUIGO</th></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>&lt; 30 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>30–179 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>5 € BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>≥ 60 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td><td style='padding:8px;border-bottom:1px solid var(--border);'>5 € BAD OUIGO (6 mois)</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>180–239 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>10 € BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td></tr><tr><td style='padding:8px;border-bottom:1px solid var(--border);'>≥ 240 min</td><td style='padding:8px;border-bottom:1px solid var(--border);'>20 € BAD</td><td style='padding:8px;border-bottom:1px solid var(--border);'>—</td></tr></table>"
     },
@@ -6181,6 +6194,7 @@ function sResultResiliation(){
 // ═══════════════════════════════════════════════════════════════════════════
 
 function render(){
+  _dpClearAllOutside();
   var app=document.getElementById("app");
   app.innerHTML="";
 
@@ -6418,7 +6432,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.1"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.2"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
