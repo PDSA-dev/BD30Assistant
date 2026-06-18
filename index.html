@@ -3534,6 +3534,7 @@ function sDossierHistory(){
             if(s.points&&s.amt>0){sAmt.textContent=s.points+" pts + "+s.amt.toFixed(2)+"€ BAD";}
             else if(s.points){sAmt.textContent=s.points+" pts";}
             else if(s.rate>0){sAmt.textContent=s.rate+"% → "+s.amt.toFixed(2)+"€";}
+            else if(s.isExceptional&&s.exAmt!=null){sAmt.textContent=s.exAmt.toFixed(2)+"€ BAD";}
             else{sAmt.textContent=s.amt.toFixed(2)+"€ BAD";}
             sRow.appendChild(sLabel);sRow.appendChild(sAmt);
             segsWrap.appendChild(sRow);
@@ -3580,6 +3581,7 @@ function sDossierHistory(){
                 else if(s.points)part+=s.points+"pts";
                 else if(s.fix)part+="= "+s.amt.toFixed(2)+"€";
                 else if(s.rate>0)part+=s.rate+"% = "+s.amt.toFixed(2)+"€";
+                else if(s.isExceptional&&s.exAmt!=null)part+="= "+s.exAmt.toFixed(2)+"€ BAD";
                 else part+="= "+s.amt.toFixed(2)+"€";
                 return part;
               });
@@ -6267,12 +6269,13 @@ function render(){
           var _isCoveredByEx=_exIdsAll.indexOf(seg.id)>=0;
           if(_isCoveredByEx){
             _ri={rate:0,fix:null};_amt=0;
+            var _exDisplayAmt=S.exceptionalIndemnity.isMax?(S.exceptionalIndemnity.maxAmtPerPax||S.exceptionalIndemnity.amount):S.exceptionalIndemnity.amount;
           }else{
             _ri=_isBD?{rate:getBilletDirectRate(seg.carrier,seg.carrier==="ouigo"&&S.ouigoDelay?S.ouigoDelay:S.delay),fix:null}:getRateInfo(seg.carrier,seg.tarif,S.delay);
             _amt=segAmt(seg.price,seg.tarif,_ri);_t+=_amt;
           }
         }
-        _segs.push({carrier:getCarrierLabel(seg.carrier),tarifLabel:getTarifObj(seg.tarif).label,tarifId:seg.tarif,price:seg.price,rate:_ri.rate,fix:_ri.fix,amt:_amt,points:_pts,segId:seg.id});
+        _segs.push({carrier:getCarrierLabel(seg.carrier),tarifLabel:getTarifObj(seg.tarif).label,tarifId:seg.tarif,price:seg.price,rate:_ri.rate,fix:_ri.fix,amt:_amt,points:_pts,segId:seg.id,isExceptional:_isCoveredByEx||false,exAmt:_isCoveredByEx?_exDisplayAmt:null});
       });
       if(S.exceptionalIndemnity)_t+=S.exceptionalIndemnity.amount;
       var _ml=S.segments.length===1?"G30":"BD30";
