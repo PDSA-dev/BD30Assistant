@@ -4697,6 +4697,7 @@ function sExceptionalIndemnity(){
 
     function applyPrime(rate){
       var r=calcPrime(rate);
+      var _nextStep=(isBilletDirectOUIGOTGV(S.segments)&&!S.ouigoDelay)?"ouigo_retard_segment":"result_retard";
       set({
         exceptionalIndemnity:{
           groupId:S.selectedTGVForException,segmentIds:segIds,
@@ -4706,7 +4707,7 @@ function sExceptionalIndemnity(){
           primeBadTiers:r.badTiersTotal,isPrime:true,
           primeInputPts:ptsPerPax,primeInputEur:eurosPerPax
         },
-        exceptionalPrimeEuros:null,selectedTGVForException:null,step:"result_retard"
+        exceptionalPrimeEuros:null,selectedTGVForException:null,step:_nextStep
       });
     }
 
@@ -4810,18 +4811,19 @@ function sExceptionalIndemnity(){
   }
 
   var passLabel=nbVoy>1?" ("+nbVoy+" voyageurs)":"";
+  var _nextStepEx=(isBilletDirectOUIGOTGV(S.segments)&&!S.ouigoDelay)?"ouigo_retard_segment":"result_retard";
   return card("Indemnisation exceptionnelle","Sélectionne le niveau de compensation — "+carrierLabel+passLabel+" | Total billets: "+totalPrice.toFixed(2)+" € | Compensation actuelle: "+regulatoryAmt.toFixed(2)+" €",renderOpts([
     {icon:"<i data-lucide='percent'></i>",label:"100% du billet",desc:"Complément pour atteindre 100% du prix total",cb:function(){
-      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:100,amount:calcComplementAmt(100),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:100,amount:calcComplementAmt(100),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:_nextStepEx});
     }},
     {icon:"<i data-lucide='percent'></i>",label:"150% du billet",desc:"Complément pour atteindre 150% du prix total",cb:function(){
-      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:150,amount:calcComplementAmt(150),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:150,amount:calcComplementAmt(150),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:_nextStepEx});
     }},
     {icon:"<i data-lucide='percent'></i>",label:"200% du billet",desc:"Complément pour atteindre 200% du prix total",cb:function(){
-      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:200,amount:calcComplementAmt(200),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:200,amount:calcComplementAmt(200),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:_nextStepEx});
     }},
     {icon:"<i data-lucide='percent'></i>",label:"300% du billet",desc:"Complément pour atteindre 300% du prix total",cb:function(){
-      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:300,amount:calcComplementAmt(300),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:"result_retard"});
+      set({exceptionalIndemnity:{groupId:S.selectedTGVForException,segmentIds:segIds,rate:300,amount:calcComplementAmt(300),regulatory:regulatoryAmt,totalPrice:totalPrice,isPrime:false},exceptionalPrimeEuros:null,selectedTGVForException:null,step:_nextStepEx});
     }},
   ]));
 }
@@ -6441,7 +6443,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.3"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.4"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
