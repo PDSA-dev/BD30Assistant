@@ -6280,17 +6280,24 @@ function render(){
         }else{
           var _exIdsAll=S.exceptionalIndemnity?(S.exceptionalIndemnity.segmentIds||[S.exceptionalIndemnity.segmentId]):[];
           var _isCoveredByEx=_exIdsAll.indexOf(seg.id)>=0;
-          if(_isCoveredByEx){
+          var _isComplementSave=_isCoveredByEx&&S.exceptionalIndemnity&&!S.exceptionalIndemnity.isMax&&!S.exceptionalIndemnity.isPrime;
+          if(_isCoveredByEx&&!_isComplementSave){
+            // MAX ou PRIME : segment remplacé — stocker amt=0, isExceptional=true
             _ri={rate:0,fix:null};_amt=0;
             var _exDisplayAmt=S.exceptionalIndemnity.isMax?(S.exceptionalIndemnity.maxAmtPerPax||S.exceptionalIndemnity.amount):S.exceptionalIndemnity.amount;
+          }else if(_isComplementSave){
+            // COMPLÉMENT : stocker le taux exceptionnel final par segment
+            var _exRateSave=S.exceptionalIndemnity.rate;
+            _ri={rate:_exRateSave,fix:null};_amt=seg.price*_exRateSave/100;_t+=_amt;
           }else{
             _ri=_isBD?{rate:getBilletDirectRate(seg.carrier,seg.carrier==="ouigo"&&S.ouigoDelay?S.ouigoDelay:S.delay),fix:null}:getRateInfo(seg.carrier,seg.tarif,S.delay);
             _amt=segAmt(seg.price,seg.tarif,_ri);_t+=_amt;
           }
         }
-        _segs.push({carrier:getCarrierLabel(seg.carrier),tarifLabel:getTarifObj(seg.tarif).label,tarifId:seg.tarif,price:seg.price,rate:_ri.rate,fix:_ri.fix,amt:_amt,points:_pts,segId:seg.id,isExceptional:_isCoveredByEx||false,exAmt:_isCoveredByEx?_exDisplayAmt:null});
+        _segs.push({carrier:getCarrierLabel(seg.carrier),tarifLabel:getTarifObj(seg.tarif).label,tarifId:seg.tarif,price:seg.price,rate:_ri.rate,fix:_ri.fix,amt:_amt,points:_pts,segId:seg.id,isExceptional:(_isCoveredByEx&&!_isComplementSave)||false,exAmt:(_isCoveredByEx&&!_isComplementSave)?_exDisplayAmt:null});
       });
-      if(S.exceptionalIndemnity)_t+=S.exceptionalIndemnity.amount;
+      // COMPLÉMENT : _t déjà accumulé par segment dans la boucle — n'ajouter que pour MAX et PRIME
+      if(S.exceptionalIndemnity&&(S.exceptionalIndemnity.isMax||S.exceptionalIndemnity.isPrime))_t+=S.exceptionalIndemnity.amount;
       var _ml=S.segments.length===1?"G30":"BD30";
       var _exRate=S.exceptionalIndemnity?S.exceptionalIndemnity.rate:null;
       var _exIds=S.exceptionalIndemnity?(S.exceptionalIndemnity.segmentIds||[S.exceptionalIndemnity.segmentId]):[];
@@ -6454,7 +6461,7 @@ function render(){
     });
   });
 
-  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.5"));
+  app.appendChild(div("footer","TGVCare Assistant • BD30/G30 • Calcul de conformité SNCF • v2.0.6"));
 
   if(window.lucide&&typeof lucide.createIcons==="function"){
     try{lucide.createIcons();}catch(e){}
